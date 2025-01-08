@@ -115,11 +115,13 @@ export default defineComponent({
     const downloadFileByJob = (rowNums: any) => {
       const link = document.createElement("a");
       let rowData = jspreadsheetObj.getJsonRow(rowNums);
-
-      const decodedData = atob(rowData["parameter.fileBase"]);
-      let blob = new Blob([decodedData], {
-        type: "text/plain",
-      });
+      var bstr = atob(rowData["parameter.fileBase"]),
+        n = bstr.length,
+        u8arr = new Uint8Array(n);
+      while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+      }
+      let blob = new Blob([u8arr]);
       link.style.display = "none";
       link.href = URL.createObjectURL(blob);
       link.setAttribute("download", rowData["parameter.file"]);
@@ -380,7 +382,7 @@ export default defineComponent({
           for (const key in data1) {
             if (Object.prototype.hasOwnProperty.call(data1, key)) {
               const element = data1[key];
-              if (element.column_group_name == "パラメータ") {
+              if (element.column_group_id == "0000002") {
                 //Loop traversal g3             g3 contain g2
                 let headerRowArray: any = [];
                 let loopData: any = [];
@@ -389,8 +391,8 @@ export default defineComponent({
                 arr.length = 0;
                 for (let j = 0; j < headerRowArray.length; j++) {
                   if (j == 0) {
+                    i.value = 0;
                     element.columns.forEach((el: any, index: number) => {
-                      i.value = 0;
                       // to compute パラメータ collspan
                       computeColspan(el, data1);
 
@@ -426,6 +428,12 @@ export default defineComponent({
                         ...headerThird,
                       ];
                     }
+                    if (headerRowArray.length == 1) {
+                      nestedHeaders.length = 0;
+                      arr.forEach((headerArr: any) => {
+                        nestedHeaders.push(headerArr);
+                      });
+                    };
                   } else {
                     headerSecondRow.length = 0;
 
@@ -522,7 +530,8 @@ export default defineComponent({
                 } else if (element.column_name_rest == "host_name") {
                   columns.splice(0, 0, obj3);
                 } else if (element.column_name_rest == "input_order") {
-                  obj3.width = 66;
+                  obj3.width = 118;
+                  obj3.type = "numeric";
                   columns.splice(2, 0, obj3);
                 } else {
                   if (element.column_name_rest == "discard") {
@@ -571,7 +580,7 @@ export default defineComponent({
           for (const key in data1) {
             if (Object.prototype.hasOwnProperty.call(data1, key)) {
               const element = data1[key];
-              if (element.column_group_name == "パラメータ") {
+              if (element.column_group_id == "0000002") {
                 let mapping_cols: any = element.columns;
                 if (mapping_cols.length != 0) {
                   loopFindColumns(mapping_cols, data1, data3);
@@ -695,6 +704,12 @@ export default defineComponent({
   }
   .jexcel > thead > tr > td {
     text-align: left;
+  }
+  .jexcel > tbody > tr > td.readonly  {
+    color: #606266;
+  }
+  .jexcel > tbody > tr > td > a {
+    color: blue;
   }
   .jexcel {
     width: max-content;

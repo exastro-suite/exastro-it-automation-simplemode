@@ -706,6 +706,7 @@ export default defineComponent({
 
 <style scoped lang="less">
 .progressBoxAll {
+  font-size: 16px;
   width: calc(100% - 55px);
   text-align: center;
   position: absolute;

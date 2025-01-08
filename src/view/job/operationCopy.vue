@@ -536,13 +536,14 @@ export default defineComponent({
           operationOptions.length = 0;
           let arr = res.data.data;
 
+          let loginOperation = store.getLoginOperation;
           let arrResult = arr.filter(
-            (item: any) => item.parameter.last_run_date !== null
+            (item: any) => item.parameter.operation_name !== loginOperation
           );
 
           // sort by last_run_date
           let arrResult1 = arrResult.sort((a: any, b: any) =>
-            b.parameter.last_run_date.localeCompare(a.parameter.last_run_date)
+            b.parameter.scheduled_date_for_execution.localeCompare(a.parameter.scheduled_date_for_execution)
           );
           arrResult1.forEach((element: any) => {
             let obj = {

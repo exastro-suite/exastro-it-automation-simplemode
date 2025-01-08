@@ -1,5 +1,5 @@
 <template>
-  <p style="font-size:12px;float:right;margin-right: 10px;">v1.1</p>
+  <p style="font-size:12px;float:right;margin-right: 10px;">v1.2</p>
   <div class="login">
     <div class="loginImage">
       <img src="../../assets/image/Exastro-logo.png" alt="logo" />

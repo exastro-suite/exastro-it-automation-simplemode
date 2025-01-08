@@ -21,6 +21,7 @@
             list="dataList"
             placeholder="オペレーション名を選択または入力"
             style="width: 378px; display: inline"
+            name="dataListname"
           />
           <datalist id="dataList">
             <option v-for="item in optionsNames" :key="item.value">

@@ -94,3 +94,34 @@ export function operationList() {
     data,
   });
 }
+
+/**
+ * @description:比較用情報を取得
+ */
+export function getCompareInfos(data: any) {
+  const orgId = localStorage.getItem("organization");
+  const workspaceId = localStorage.getItem("workspace");
+  return service({
+    url:
+      Api.Api +
+      orgId +
+      "/workspaces/" +
+      workspaceId +
+      "/ita/menu/compare_execute/compare/execute/",
+    method: "POST",
+    data
+  });
+}
+
+/**
+ * @description:比較の結果を取得
+ */
+export function getCompareResults(data: any,str_url:string) {
+  const orgId = localStorage.getItem("organization");
+  const workspaceId = localStorage.getItem("workspace");
+  return service({
+    url:str_url,
+    method: "POST",
+    data
+  });
+}

@@ -1,5 +1,5 @@
 <template>
-  <div class="compartitle" style="border: 1px solid #c3c3c3;padding-left: 5px;padding-right: 5px;border-radius: 6px;">
+  <div class="compartitle" style="border: 1px solid #c3c3c3;padding-left: 5px;padding-right: 5px;border-radius: 6px;min-width: 710px">
     <p>対象ホスト</p>
     <div class="header-box">
       <el-input v-model="keyWords" style="width: 460px" placeholder="ホスト名 または IPアドレスを入力" class="searchBtn">
