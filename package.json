@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@element-plus/icons-vue": "2.1.0",
-    "axios": "1.7.4",
+    "axios": "1.7.8",
     "diff2html": "3.4.48",
     "element-plus": "2.3.6",
     "jspreadsheet-ce": "4.13.4",
