@@ -134,7 +134,7 @@ import {
   onMounted
 } from "vue";
 import { useStore } from "../../store/index";
-import { operationList, comparFileDownload, getCompareInfos,getCompareResults } from "../../api/comparApi";
+import { operationListForFlag, comparFileDownload, getCompareInfos,getCompareResults,getDefOperationDataSetInfos } from "../../api/comparApi";
 import { ElMessage } from "element-plus";
 import {
   Loading,
@@ -233,8 +233,30 @@ export default defineComponent({
       })
     }
     createdTableData()
-    const getOperationList = () => {
-      operationList()
+    const getOperationList = async () => {
+      let data = {
+        discard: {
+          NORMAL: "0",
+        },
+        "Flag": {
+          LIST: [null]
+        }
+      };
+      let defOperationIds: any[] = [];
+      await getDefOperationDataSetInfos(data).then(async (res: any) => {
+        let data = res.data.data;
+        if (data.length != 0) {
+          data.forEach((element: any) => {
+            defOperationIds.push(element.parameter.Operation);
+          });
+        }
+      }).catch((err: any) => {
+        ElMessage({
+          type: "error",
+          message: err,
+        });
+      });
+      await operationListForFlag(defOperationIds)
         .then((res: any) => {
           let tmpoptions: any = [];
           let arr1 = res.data.data;

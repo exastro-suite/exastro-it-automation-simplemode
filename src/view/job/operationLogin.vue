@@ -81,11 +81,10 @@ import {
   ref,
   watch,
   onMounted,
-  getCurrentInstance,
 } from "vue";
-import { getradiosInfo, optionLogin } from "../../api/jobApi";
+import { getradiosInfo, getOperationDataSetInfosByFlag} from "../../api/jobApi";
 import { operationList } from "../../api/jobList";
-import { ElMessage, ElTable, ElRadio } from "element-plus";
+import { ElMessage,} from "element-plus";
 import { useStore } from "../../store/index";
 import { eventBus } from "../../store/eventBus";
 import { DocumentCopy } from "@element-plus/icons-vue";
@@ -222,13 +221,27 @@ export default defineComponent({
         dataIndex: "scheduled_date_for_execution",
       },
     ]);
-    function getInterruptedOperations() {
+    async function getInterruptedOperations() {
       loadingShow.value = true;
-      operationList()
+      let operationDataSetInfosByFlag: any[] = []; 
+      await getOperationDataSetInfosByFlag().then((res: any) => {
+        let data = res.data.data;
+        data.forEach((element: any) => {
+          operationDataSetInfosByFlag.push(element.parameter.Operation);
+        });
+      }).catch((err: any) => {
+        loadingShow.value = false;
+        ElMessage({
+          type: "error",
+          message: err,
+        });
+        return;
+      });
+      await operationList()
         .then((res: any) => {
           let data = res.data.data;
           let result = data.filter((el: any) => {
-            return el.parameter.last_run_date == null;
+            return el.parameter.last_run_date == null && operationDataSetInfosByFlag.indexOf(el.parameter.operation_id) == -1;
           });
 
           let arr1 = result.sort((a: any, b: any) =>
@@ -278,7 +291,6 @@ export default defineComponent({
       login,
       successOperation,
       dataTime,
-
       search,
       flag,
       flagButton,

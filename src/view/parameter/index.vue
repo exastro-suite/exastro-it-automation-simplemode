@@ -30,7 +30,7 @@
 
 <script lang="ts">
 import { defineComponent, reactive, ref } from "vue";
-import { operationList } from "../../api/jobList";
+import { operationListForFlag,getDefOperationDataSetInfos } from "../../api/jobList";
 import { ElMessage, ElTable } from "element-plus";
 import { Search,Refresh, } from "@element-plus/icons-vue";
 import { debounce } from "../../utils/debounce";
@@ -90,9 +90,31 @@ export default defineComponent({
       },
     ]);
 
-    function getRadios() {
+    async function getRadios() {
       loadingShow.value = true;
-      operationList()
+      let data = {
+        discard: {
+          NORMAL: "0",
+        },
+        "Flag": {
+          LIST: [null]
+        }
+      };
+      let defOperationIds: any[] = [];
+      await getDefOperationDataSetInfos(data).then(async (res: any) => {
+        let data = res.data.data;
+        if (data.length != 0) {
+          data.forEach((element: any) => {
+            defOperationIds.push(element.parameter.Operation);
+          });
+        }
+      }).catch((err: any) => {
+        ElMessage({
+          type: "error",
+          message: err,
+        });
+      });
+      await operationListForFlag(defOperationIds)
         .then((res: any) => {
           let data: any = res.data.data;
           let arr1: any = data.sort((a: any, b: any) => {
@@ -109,7 +131,7 @@ export default defineComponent({
               0,
               element.parameter.last_update_date_time.length - 7
             );
-
+            
             operations.push(element.parameter);
             operationsCopy.push(element.parameter);
           });

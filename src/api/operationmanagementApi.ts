@@ -5,51 +5,6 @@ enum Api {
 }
 
 /**
- * @description: getmovementInfo
- */
-export function movementList(data: any) {
-  const orgId = localStorage.getItem("organization");
-  const workspaceId = localStorage.getItem("workspace");
-
-  return service({
-    url:
-      Api.Api +
-      orgId +
-      "/workspaces/" +
-      workspaceId +
-      "/ita/menu" +
-      "/movement_list_ansible_role/filter/",
-    method: "POST",
-    data,
-  });
-}
-/**
- * @description: getOperations
- * 基本コンソール     
- * オペレーション一覧
- */
-export function operationList() {
-  const orgId = localStorage.getItem("organization");
-  const workspaceId = localStorage.getItem("workspace");
-  const data = {
-    discard: {
-      NORMAL: "0",
-    },
-  };
-  return service({
-    url:
-      Api.Api +
-      orgId +
-      "/workspaces/" +
-      workspaceId +
-      "/ita/menu" +
-      "/operation_list/filter/",
-    method: "POST",
-    data,
-  });
-}
-
-/**
  * 入力用DefOperationDataSetの情報を取得
  * @param data
  * @returns OperationDataSetの情報
@@ -70,20 +25,10 @@ export function getDefOperationDataSetInfos(data:any) {
   });
 }
 
-export function designateOperation(name:any) {
+export function getDefOperationInfos(data:any) {
   const orgId = localStorage.getItem("organization");
   const workspaceId = localStorage.getItem("workspace");
-  const data = {
-    discard: {
-      NORMAL: "0",
-    },
-    // operation_name:{
-    //   NORMAL: name,
-    // }
-    operation_name:{
-      LIST:[name],
-    }
-  };
+  
   return service({
     url:
       Api.Api +
@@ -97,15 +42,15 @@ export function designateOperation(name:any) {
   });
 }
 
-export function operationListForFlag(operation_ids: any) {
+export function getMenudefinitionlist() {
   const orgId = localStorage.getItem("organization");
   const workspaceId = localStorage.getItem("workspace");
   const data = {
     discard: {
       NORMAL: "0",
     },
-    operation_id:{
-      LIST : operation_ids
+    menu_group_for_input:{
+      LIST:["入力用/収集"],
     }
   };
   return service({
@@ -115,9 +60,67 @@ export function operationListForFlag(operation_ids: any) {
       "/workspaces/" +
       workspaceId +
       "/ita/menu" +
-      "/operation_list/filter/",
+      "/menu_definition_list/filter/",
     method: "POST",
     data,
   });
 }
 
+/**
+ * @description: optionAllRegister
+ */
+export function optionAllRegister(data: any, menu: string) {
+  const orgId = localStorage.getItem("organization");
+  const workspaceId = localStorage.getItem("workspace");
+  return service({
+    url:
+      Api.Api +
+      orgId +
+      "/workspaces/" +
+      workspaceId +
+      "/ita/menu/" 
+      + menu + '/maintenance/all/',
+    method: "POST",
+    data,
+  });
+}
+
+/**
+ * @description: /filter/count/
+ */
+export function getOperationCount(data: any, name: string) {
+  const orgId = localStorage.getItem("organization");
+  const workspaceId = localStorage.getItem("workspace");
+  return service({
+    url:
+      Api.Api +
+      orgId +
+      "/workspaces/" +
+      workspaceId +
+      "/ita/menu/" +
+      name +
+      "/filter/count/",
+    method: "POST",
+    data,
+  });
+}
+
+/**
+ * @description: optionName
+ */
+export function optionName(data: any, name: string) {
+  const orgId = localStorage.getItem("organization");
+  const workspaceId = localStorage.getItem("workspace");
+  return service({
+    url:
+      Api.Api +
+      orgId +
+      "/workspaces/" +
+      workspaceId +
+      "/ita/menu/" +
+      name +
+      "/filter/",
+    method: "POST",
+    data,
+  });
+}

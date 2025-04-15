@@ -70,6 +70,7 @@ export default defineComponent({
   setup(props, { emit }) {
     const store = useStore();
     const isvisible = ref(store.getWelcomeDialogShow);
+    isvisible.value = false;
     const isSelect = ref(false);
     const cancel = () => {
       if (isSelect.value) {

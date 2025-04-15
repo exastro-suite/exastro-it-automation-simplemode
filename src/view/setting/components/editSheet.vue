@@ -1,8 +1,8 @@
 <template>
   <div v-if="visible" class="editBoxSheet" v-loading="loadingDialog">
-    <div  ref="spreadsheetEdit" style="min-height: 500px; min-width: 100%;"></div>
+    <div  ref="spreadsheetEdit" style="min-height: 535px; min-width: 100%;"></div>
   </div>
-  <div v-else v-loading="true" style="height: 500px"></div>
+  <div v-else v-loading="true" style="height: 535px"></div>
   <el-upload ref="uploadRef" class="upload-demo" action="#" :auto-upload="false" :on-change="convertFileToBase64"
     v-show="false">
     <template #trigger>
@@ -32,21 +32,28 @@ import {
   sheetColumnList,
   sheetpullDown,
 } from "../../../api/jobApi";
-import { pulldownApi } from "../../../api/index";
-import { useStore } from "../../../store/index";
+import { pulldownApi,deviceList} from "../../../api/index";
 import { eventBus } from "../../../store/eventBus";
+interface DataType {
+  last_update_date_time: string;
+  host_name: string;
+  last_updated_user: string;
+  ip_address: string;
+  remarks: string;
+}
 export default defineComponent({
   name: "editSheet",
-  props: ["dialogVisibleEdit", "editOperation", "editParams", "movementName"],
-  emits: ["changeEdit","setButtonStatus","editSheetchangestatus"],
+  props: ["dialogVisibleEdit", "editOperation", "editParams", "parametersheetName","selectOpName",],
+  emits: ["changeEdit","setButtonStatus","editSheetchangestatus",],
   components: {
     ElDialog,
   },
   setup(props, { emit }) {
+    const selectOpName = ref(props.selectOpName);
     // event bus
     const bus = eventBus();
     const ceEdit = function (a: any) {
-      bus.emit("ceEdit", a);
+      bus.emit("ceEditSetting", a);
     };
     const spreadsheetEdit: any = ref(null);
     const selectFileBtn: any = ref(null);
@@ -54,8 +61,6 @@ export default defineComponent({
     let jspreadsheetObj: any = ref();
     let copySize: any = ref();
     let pasteCells: any = reactive([]);
-    const store = useStore();
-    let host = store.getHost;
     let hostList: any = reactive([]);
     let filePosition = ref(null);
     let operationList: any = reactive([]);
@@ -69,7 +74,7 @@ export default defineComponent({
     let visible: any = ref(props.dialogVisibleEdit);
     let parameter = ref(props.editParams);
     let operation = ref(props.editOperation);
-    let movement = ref(props.movementName);
+    let parametersheetName = ref(props.parametersheetName);
     let copyColumns: any = reactive([]);
     let nestedHeaders: any = reactive([]);
     let deleteRowsData: any = ref("");
@@ -79,6 +84,9 @@ export default defineComponent({
     let errorFlag: any = ref(false);
     let sheetWidth: any = ref("");
     let headertoolMapping: any = reactive({});
+
+    let deviceListData: Array<DataType> = reactive([]);
+
     onMounted(() => {
       sheetWidth.value = window.innerWidth * 0.868 + "px";
 
@@ -96,14 +104,14 @@ export default defineComponent({
           container[0].style.width = sheetWidth.value;
         }
       };
-      bus.on("parametersheetChange", () => {
+      bus.on("parametersheetChangeSetting", () => {
         deleteRowsArray.length = 0;
         errorFlag.value = false;
       })
-      bus.on("cancelEditSheet", () => {
+      bus.on("cancelEditSheetSetting", () => {
         cancel()
       })
-      bus.on("register", () => {
+      bus.on("registerSetting", () => {
         register()
       })
       isFirst.value = true;
@@ -115,7 +123,7 @@ export default defineComponent({
       visible.value = val.dialogVisibleEdit;
       parameter.value = val.editParams;
       operation.value = val.editOperation;
-      movement.value = val.movementName;
+      parametersheetName.value = val.parametersheetName;
       filePosition.value = null;
       errorFlag.value = false;
       errorTableData.length = 0;
@@ -126,10 +134,12 @@ export default defineComponent({
 
       spreadsheetEdit.value = null;
       if (visible.value) {
+        deviceListData = [];
+        await getDeviceList();
+        selectOpName.value = props.selectOpName;
         loadingDialog.value = true;
         emit("setButtonStatus", true);
         getPullDown(parameter.value);
-        
         await getColumns(parameter.value);
       }
     });
@@ -140,26 +150,18 @@ export default defineComponent({
       (window as any).downloadFile = downloadFile;
       (window as any).handlerOnClickSelectFileBtn = handlerOnClickSelectFileBtn;
     });
+    
+    
     const getPullDown = (value: string) => {
       pulldownApi(value).then((res: any) => {
         hostId = res.data.data.host_name;
         operationId = res.data.data.operation_name_select;
-        let selectName = store.getOperationSelect;
+        let selectName = selectOpName.value;
         hostList.length = 0;
         operationList.length = 0;
         for (const key in hostId) {
           const element = hostId[key];
-          host.forEach((el: any) => {
-            if (el.managed_system_item_number) {
-              if (el.managed_system_item_number == key) {
-                hostList.push(element);
-              }
-            } else {
-              if (el.hostgroup_id == key) {
-                hostList.push(element);
-              }
-            }
-          });
+          hostList.push(element);
         }
         for (const key in operationId) {
           const element = operationId[key];
@@ -239,7 +241,7 @@ export default defineComponent({
 
       if (container[0]) {
         container[0].style.width = sheetWidth.value;
-        container[0].style.maxHeight = "500px";
+        container[0].style.maxHeight = "535px";
       }
 
       if (cell.classList.contains("readonly")) {
@@ -391,12 +393,14 @@ export default defineComponent({
           items.push({
             title: obj.options.text.insertANewRowBefore,
             onclick: function () {
+              insertBeforeRow = 0
               obj.insertRow(1, parseInt(y), 1);
             },
           });
           items.push({
             title: obj.options.text.insertANewRowAfter,
             onclick: function () {
+              insertBeforeRow = 1
               obj.insertRow(1, parseInt(y));
             },
           });
@@ -483,11 +487,6 @@ export default defineComponent({
         title: "",
         colspan: "1",
       },
-      // host_name
-      {
-        title: "",
-        colspan: "1",
-      },
     ];
 
     // 最終更新日時 //備考 //最終更新日時 //最終更新者
@@ -521,6 +520,7 @@ export default defineComponent({
       colspan: "",
     };
     let headerSecondRow: any = [];
+    let insertBeforeRow: any = 0;
     //表の初期値
     const jSpreadSheetOptions: any = {
       //表の設定等
@@ -546,6 +546,11 @@ export default defineComponent({
       ondeleterow: onDeleteRow,
       onbeforedeleterow: onBeforeDeleteRow,
       lazyLoading: true,
+      oninsertrow: function (el: any, rowNumber: any, numOfRows: any) {
+        if (deviceListData!= null && deviceListData.length > 0) {
+          this.setValueFromCoords(1, rowNumber + insertBeforeRow, deviceListData[0].host_name);
+        }
+      }
     };
 
     // ダウンロードファイル
@@ -613,7 +618,28 @@ export default defineComponent({
             LIST: [operation],
           },
         };
-        optionName(params1, parameter).then((res: any) => {
+        await optionName(params1, parameter).then(async (res: any) => {
+          let dataJson = res.data.data;
+          if (dataJson.length) {
+            for (let index = 0; index < dataJson.length; index++) {
+              let updataelement = JSON.parse(JSON.stringify(dataJson[index]));
+              if (updataelement.parameter.host_name != deviceListData[0].host_name) {
+                updataelement.type = "Update"
+                updataelement.parameter.host_name = deviceListData[0].host_name;
+                let updataelementData = [updataelement];
+                await optionAllRegister(updataelementData, parameter).then((res: any) => {
+                  // donothong
+                }).catch((error: any) => {
+                  ElMessage({
+                    type: "error",
+                    message: error,
+                  });
+                });
+              }
+            }
+          }
+        });
+        await optionName(params1, parameter).then(async(res: any) => {
           let dataJson = res.data.data;
           dataObj.length = 0;
           if (dataJson.length) {
@@ -671,8 +697,6 @@ export default defineComponent({
             jspreadsheetObj.refresh();
           } catch (error: any) {
           }
-          
-          
           loadingDialog.value = false;
           emit("setButtonStatus", false);
         });
@@ -886,7 +910,7 @@ export default defineComponent({
               title: "",
               name: "",
               readOnly: true,
-              width: 157,
+              width: 158,
             };
             let keyEle = keys[i];
 
@@ -933,6 +957,7 @@ export default defineComponent({
                   adminColumn.push(obj3);
                 } else if (element.column_name_rest == "host_name") {
                   obj3.type = "dropdown";
+                  obj3.type = "hidden";
                   obj3.source = hostList;
                   columns.splice(0, 0, obj3);
                 } else if (element.column_name_rest == "input_order") {
@@ -1113,6 +1138,7 @@ export default defineComponent({
             let result = unflatten(el);
             obj.parameter = result.parameter;
             obj.parameter.discard = "0";
+            obj.parameter.host_name = deviceListData[0].host_name;
             if (result.parameter.fileBase != "") {
               obj.file.file = result.parameter.fileBase;
             }
@@ -1123,7 +1149,7 @@ export default defineComponent({
           arrData.forEach((el: any) => {
             // updated
             if (el["parameter.uuid"] != "") {
-              if (el["parameter.host_name"]) {
+              // if (el["parameter.host_name"]) {
                 el["parameter.operation_name_select"] = operationList[0];
                 if (el["parameter.operation_name_select"]) {
                   let obj: any = {
@@ -1135,13 +1161,14 @@ export default defineComponent({
 
                   obj.parameter = result.parameter;
                   obj.parameter.discard = "0";
+                  obj.parameter.host_name = deviceListData[0].host_name;
                   if (result.parameter.fileBase != "") {
                     obj.file.file = result.parameter.fileBase;
                   }
                   delete obj.parameter.fileBase;
                   optionsArr.push(obj);
-                } else {
-                }
+                // } else {
+                // }
               } else {
               }
             } else {
@@ -1191,9 +1218,12 @@ export default defineComponent({
             });
           }
         }
-        optionsArr.forEach((o: any) => {
+        let hostSet: any = [];
+        for (let index = 0; index < optionsArr.length; index++) {
+          const o = optionsArr[index];
           let parameter = o.parameter;
           o.parameter.operation_name_select = operationList[0];
+          
           for (let key in parameter) {
             if (key == "actionType") {
               delete parameter["actionType"];
@@ -1228,9 +1258,9 @@ export default defineComponent({
               }
             }
           }
-        });
+        }
         loadingDialog.value = true
-        optionAllRegister(optionsArr, parameter.value)
+        await optionAllRegister(optionsArr, parameter.value)
           .then((res: any) => {
             ceEdit("true");
             // update operation
@@ -1243,7 +1273,7 @@ export default defineComponent({
             deleteRowsArray.length = 0;
             errorFlag.value = false;
             let copystatus = {
-              movementName: movement,
+              parametersheetName: parametersheetName,
               value: parameter.value
             }
             emit("editSheetchangestatus", copystatus);
@@ -1310,7 +1340,26 @@ export default defineComponent({
         }
       }
     };
-   
+    async function getDeviceList() {
+      await deviceList("device_list")
+        .then((res: any) => {
+          let arr1 = res.data.data;
+          if (arr1.length) {
+            arr1.forEach((element: any) => {
+              deviceListData.push(element.parameter);
+            });
+            deviceListData.sort((a: any, b: any) => {
+              return Date.parse(a["last_update_date_time"]) - Date.parse(b["last_update_date_time"]);
+            });
+          }
+        })
+        .catch((error: any) => {
+          ElMessage({
+            type: "error",
+            message: error,
+          });
+        });
+    }
     return {
       visible,
       register,
@@ -1321,7 +1370,7 @@ export default defineComponent({
       errorTableData,
       errorFlag,
       spreadsheetEdit,
-      movement,
+      parametersheetName,
       selectFileBtn,
       loadingDialog,
       isDisabled,

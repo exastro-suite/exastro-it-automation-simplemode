@@ -36,8 +36,8 @@
         </div>
       </template>
     </el-dialog>
-    <ReadOnlySheet :dialogVisibleSheet="dialogVisibleSheet" @change="change" :movementName="movementName"
-      :readParams="paramsSheetValue" :readOperation="operation" :isInitOperation="isInitOperation"></ReadOnlySheet>
+    <ReadOnlySheet :dialogVisibleSheet="dialogVisibleSheet" @change="change" :parametersheetName="parametersheetName"
+      :readParams="paramsSheetValue" :readOperation="operation"></ReadOnlySheet>
 
 
     <div style="justify-content: space-between;display: flex;">
@@ -68,69 +68,17 @@
         </el-icon><span style="margin-left: 5px;">既存パラメータからコピー</span></el-divider>
     </div>
     <div v-show="isShow" style="margin-top: 5px;">
-      <p>
-        <span>　　パラメータシート</span>
-        <el-select v-model="paramsValue" placeholder="コピー元のパラメータシートを選択する" style="width: 410px;margin-left: 15px;" :disabled="isBtnDisable"
-          filterable @change="changeval">
-          <el-option v-for="item in sheetRadios" :key="item.value" :label="item.label" :value="item.value" />
-        </el-select>&nbsp;&nbsp;&nbsp;&nbsp;
-      </p>
-      <div v-if="isGather" style="display: flex;align-items: end;justify-content: start;margin: 0%;">
-        <div>
-          <p style="margin: 0%;">　　オペレーション名<el-checkbox v-model="checked1" label="収集初期値管理のみ表示" 
-              style="--el-checkbox-checked-text-color:#0960bd;vertical-align:middle;margin-left: 15px;" size="small" @change="checkBoxChange"/></p>
-          　　　　　　　　　　　<el-select v-model="operation" placeholder="コピー元のオペレーションを選択する" style="width: 410px"
-            :disabled="isBtnDisable" @change="copyOperationChange" >
-            <el-option v-for="item in operationRadios" :key="item.value" :label="item.label" :value="item.value" :style="{ display: isGather && checked1? (item.isFlagOne ? 'list-item':'none'):'list-item'}"/>
-          </el-select>&nbsp;&nbsp;&nbsp;&nbsp;
-        </div>
-        <div style="margin: 0%;">
-          <p style="margin: 0%;">ホスト</p>
-          <el-select v-model="selectedValues" multiple clearable collapse-tags collapse-tags-tooltip
-            placeholder="作業対象のホストを選択する" :max-collapse-tags="1" style="width: 300px"
-            @visible-change="handleDropdownVisibleChange" :disabled="isBtnDisable">
-            <div class="host-el-select__popper">
-              <el-checkbox v-show="dropdownVisible" :indeterminate="isIndeterminate" v-model="isAllSelected"
-                @change="handleSelectAllChange">すべて</el-checkbox>
-            </div>
-            <div class="selectDivider"><el-divider></el-divider></div>
-            <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value">
-            </el-option>
-          </el-select>&nbsp;&nbsp;&nbsp;
-        </div>
-        <div>
-          <el-button type="primary" class="copyBtn" @click="handleCopy" :disabled="isBtnDisable"><el-icon>
-          <DocumentCopy />
-        </el-icon>&nbsp;コピー</el-button>
-      <el-button type="primary" class="browsebtn" @click="openReadSheet" :disabled="isBtnDisable"><el-icon>
-          <Search />
-        </el-icon>&nbsp;パラメータ参照</el-button>
-        </div>
-      </div>
-      <div v-if = "!isGather">
-        <span>　　オペレーション名</span>
-      <el-select v-model="operation" placeholder="コピー元のオペレーションを選択する" style="width: 410px;margin-left: 15px;" :disabled="isBtnDisable">
+      <span>　　オペレーション名</span>
+      <el-select v-model="operation" placeholder="コピー元のオペレーションを選択する" style="width: 410px;margin-left: 15px;"
+        :disabled="isBtnDisable">
         <el-option v-for="item in operationRadios" :key="item.value" :label="item.label" :value="item.value" />
       </el-select>&nbsp;&nbsp;&nbsp;&nbsp;
-      <span>ホスト</span>
-      <el-select v-model="selectedValues" multiple clearable collapse-tags collapse-tags-tooltip
-        placeholder="作業対象のホストを選択する" :max-collapse-tags="1" style="width: 300px;margin-left: 15px;" 
-        @visible-change="handleDropdownVisibleChange" :disabled="isBtnDisable">
-        <div class="host-el-select__popper">
-          <el-checkbox v-show="dropdownVisible" :indeterminate="isIndeterminate" v-model="isAllSelected"
-            @change="handleSelectAllChange">すべて</el-checkbox>
-        </div>
-        <div class="selectDivider"><el-divider></el-divider></div>
-        <el-option v-for="item in options" :key="item.value" :label="item.label" :value="item.value">
-        </el-option>
-      </el-select>&nbsp;&nbsp;&nbsp;
       <el-button type="primary" class="copyBtn" @click="handleCopy" :disabled="isBtnDisable"><el-icon>
           <DocumentCopy />
         </el-icon>&nbsp;コピー</el-button>
       <el-button type="primary" class="browsebtn" @click="openReadSheet" :disabled="isBtnDisable"><el-icon>
           <Search />
         </el-icon>&nbsp;パラメータ参照</el-button>
-      </div>
       <p class="defDivider"><el-divider /></p>
     </div>
     <div style="margin-bottom: 0px;justify-content: space-between;display: flex;">
@@ -146,15 +94,13 @@
               ダウンロード</el-button>
           </template>
         </el-popconfirm>
-        <el-button type="primary" class="loadbtn" @click="importExcel" :disabled="isBtnDisable"><el-icon>
-            <Upload />
-          </el-icon>&nbsp; アップロード</el-button>
       </div>
     </div>
     <div style="border: 1px solid #dcdfe6;margin-right: 19px;">
       <EditSheet v-if="isShowditSheet" :dialogVisibleEdit="editvisible" @changeEdit="changeEdit"
-        :movementName="movementName" :editParams="paraSheetLeftRegister" :editOperation="loginOperation"
-        @setButtonStatus="setButtonStatus" @editSheetchangestatus="editSheetchangestatus"></EditSheet>
+        :parametersheetName="parametersheetName" :editParams="paraSheetLeftRegister" :editOperation="loginOperation" :deviceListData="deviceListData"
+        @setButtonStatus="setButtonStatus" :selectOpName="selectOpName" @editSheetchangestatus="editSheetchangestatus">
+      </EditSheet>
     </div>
 
     <template #footer>
@@ -166,7 +112,6 @@
     <h3>{{ errormsg }}</h3>
     <div class="errorTable" v-if="errormsgTableshow">
       <el-table :data="copyErrorTableData" border height="250px">
-        <!-- <el-table-column width="90" prop="serialNum" label="操作" ></el-table-column> -->
         <el-table-column width="150" prop="title" label="エラー列"></el-table-column>
         <el-table-column prop="content" label="エラー内容"></el-table-column>
       </el-table>
@@ -186,21 +131,18 @@ import {
 } from "vue";
 import ReadOnlySheet from "./components/readOnlySheet.vue";
 import EditSheet from "./components/editSheet.vue";
-import type { UploadProps, UploadRawFile,UploadUserFile } from "element-plus";
+import type { UploadProps, UploadRawFile, UploadUserFile } from "element-plus";
 import { FileToBase64 } from "../../utils/fileToBase64";
 import { useStore } from "../../store/index";
 import { eventBus } from "../../store/eventBus";
 import {
-  menuItem,
   restNameApi,
   optionName,
   optionAllRegister,
   exportExcelAPI,
   relationships,
-  getOperationDataSetInfosByFlag,
-  getDefOperationInfos
 } from "../../api/jobApi";
-import { importApi, } from "../../api/index";
+import { importApi, deviceList } from "../../api/index";
 import {
   Download,
   Upload,
@@ -214,12 +156,18 @@ import {
   DocumentCopy,
   FolderAdd
 } from "@element-plus/icons-vue";
-import { ElMessage, ElSelect, ElUpload, genFileId,ElMessageBox } from "element-plus";
+import { ElMessage, ElTable, ElSelect, ElUpload, genFileId } from "element-plus";
+interface DataType {
+  last_update_date_time: string;
+  host_name: string;
+  last_updated_user: string;
+  ip_address: string;
+  remarks: string;
+}
 
 interface Radio {
   label: string;
   value: string;
-  isFlagOne: boolean;
 }
 export default defineComponent({
   name: "DialogDetail",
@@ -240,7 +188,7 @@ export default defineComponent({
     DocumentCopy,
     FolderAdd
   },
-  props: ["dialogVisible", "type", "movementName", "parametersheet","isGather"],
+  props: ["dialogVisible", "parametersheet", "loginOperation", "logOperationScheduledDate", "parametersheetName", "operationInfos"],
   emits: ["change", "changestatus", "changestatusString"],
   setup(props, { emit }) {
     // event bus
@@ -248,12 +196,11 @@ export default defineComponent({
     const bus = eventBus();
 
     const copyDetail = function (a: any) {
-      bus.emit("copyDetail", a);
+      bus.emit("copyDetailSetting", a);
     };
     const uploadCopy = function (a: any) {
-      bus.emit("uploadCopy", a);
+      bus.emit("uploadCopySetting", a);
     };
-
     const errormsg: any = ref("");
     const errormsgshow: any = ref(false);
     const errormsgTableshow: any = ref(false);
@@ -263,17 +210,17 @@ export default defineComponent({
     // table loading
     const loadingShow = ref(true);
     const loadingShowRightTable = ref(false);
-    let selectName = store.getOperationSelect;
+    let selectOpName = ref("");
     // isDisabledRight download
     let isDisabledRight = ref(false);
-    let loginOperation = store.getLoginOperation;
-    let logOperationScheduledDate = store.getLogOperationScheduledDate;
+    let loginOperation = ref(props.loginOperation);
+    let logOperationScheduledDate = ref(props.logOperationScheduledDate);
     let paraSheet = ref("");
     let paraSheetCopySource = ref("");
     let paraSheetLeft = ref("");
     let paraSheetLeftRegister = ref("");
+    const operationInfos: any = ref(props.operationInfos)
     let tableData: any = reactive([]);
-    // let hostId: any = reactive({});
     let tableDataLeft: any = reactive([]);
     // first selector
     let paramsValue = ref("");
@@ -283,13 +230,11 @@ export default defineComponent({
     let visible: any = ref(props.dialogVisible);
     let dialogVisibleSheet = ref(false);
     let dialogVisibleEdit = ref(false);
-    let movementName: any = ref(props.movementName);
+    let parametersheetName: any = ref("");
     let parametersheetRadios: any = ref(props.parametersheet);
     let parametersheetvalue: any = ref("");
     let leftDownloadFileNamePrefix = ref("")
-    let isInitOperation = ref(false);
-    // コピー元パラメータシート種別
-    let type = ref(props.type);
+    let deviceListData: Array<DataType> = reactive([]);
     let tableHeight = ref();
     // ERROR INFO
     let errorImportFlag = ref(false);
@@ -298,7 +243,7 @@ export default defineComponent({
     const fileList = ref<UploadUserFile[]>([]);
     //  movementDataSet
     const relationshipsDataArray = ref([]);
-    const isShowditSheet:any = ref(true);
+    const isShowditSheet: any = ref(true);
     // get Replication relationships
     const getRelationships = () => {
       relationships()
@@ -312,6 +257,7 @@ export default defineComponent({
           });
         });
     };
+    getDeviceList();
     getRelationships();
     onMounted(() => {
       tableHeight.value = window.innerHeight - 525;
@@ -319,43 +265,43 @@ export default defineComponent({
         tableHeight.value = window.innerHeight - 525;
       };
       // ce edit sheet
-      bus.on("ceEdit", (a: any) => {
+      bus.on("ceEditSetting", (a: any) => {
         copyErrorFlag.value = false;
         copyErrorTableData.length = 0;
         // upload copy
         errorImportFlag.value = false;
         errorImportTableData.length = 0;
       });
-      bus.on("uploadCopy", (a: any) => {
+      bus.on("uploadCopySetting", (a: any) => {
         copyErrorFlag.value = false;
         copyErrorTableData.length = 0;
       });
-      bus.on("copyDetail", (a: any) => {
+      bus.on("copyDetailSetting", (a: any) => {
         errorImportFlag.value = false;
         errorImportTableData.length = 0;
       });
-      bus.on("exportRight", (a: any) => {
+      bus.on("exportRightSetting", (a: any) => {
         exportRight();
       });
-      bus.on("exportRightJson", (a: any) => {
+      bus.on("exportRightJsonSetting", (a: any) => {
         exportRightJson();
       });
       editvisible.value = true;
     });
     onBeforeUnmount(() => {
-      bus.off_all("ceEdit");
-      bus.off_all("uploadCopy");
-      bus.off_all("exportRight");
-      bus.off_all("exportRightJson");
-      bus.off_all("copyDetail");
-      bus.off_all("register")
-      bus.off_all("cancelEditSheet");
-      bus.off_all("parametersheetChange");
-      isShowditSheet.value=false
+      bus.off_all("ceEditSetting");
+      bus.off_all("uploadCopySetting");
+      bus.off_all("exportRightSetting");
+      bus.off_all("exportRightJsonSetting");
+      bus.off_all("copyDetailSetting");
+      bus.off_all("registerSetting")
+      bus.off_all("cancelEditSheetSetting");
+      bus.off_all("parametersheetChangeSetting");
+      isShowditSheet.value = false
     });
     const options: any = ref([]);
-    let leftRestNameValueMapping:any = reactive({});
-    const getMenuItem = (isParametersheetChange:boolean=false) => {
+    let leftRestNameValueMapping: any = reactive({});
+    const getMenuItem = (isParametersheetChange: boolean = false) => {
       loadingShow.value = true;
       tableData.length = 0;
       options.value.length = 0;
@@ -364,7 +310,7 @@ export default defineComponent({
       if (!isParametersheetChange) {
         sheetRadios.length = 0;
       }
-      
+
 
       host.forEach((el) => {
         let numObj = {
@@ -379,75 +325,75 @@ export default defineComponent({
         };
         options.value.push(hostlist);
       });
-      parametersheetvalue.value = movementName.value;
+      parametersheetvalue.value = parametersheetName.value;
       let realMenuItem = '';
-      parametersheetRadios.value.forEach((el:any) => {
-        if (parametersheetvalue.value == el.value) {
+      parametersheetRadios.value.forEach((el: any) => {
+        if (parametersheetvalue.value == el.label) {
           realMenuItem = el.label;
           return;
         }
       })
       let obj2 = {
-          discard: {
-            NORMAL: 0,
-          },
-          menu_name_en: { LIST: [realMenuItem] },
-        };
-        restNameApi(obj2)
-          .then(async (res: any) => {
-            if (!isParametersheetChange) {
-              let enNameValue = res.data.data[0].parameter.menu_name_en;
-              let restNameValue = res.data.data[0].parameter.menu_name_rest;
-              paraSheet.value = enNameValue;
-              paraSheetCopySource.value = "";
+        discard: {
+          NORMAL: 0,
+        },
+        menu_name_en: { LIST: [realMenuItem] },
+      };
+      restNameApi(obj2)
+        .then(async (res: any) => {
+          if (!isParametersheetChange) {
+            let enNameValue = res.data.data[0].parameter.menu_name_en;
+            let restNameValue = res.data.data[0].parameter.menu_name_rest;
+            paraSheet.value = enNameValue;
+            paraSheetCopySource.value = "";
 
-              // 構築 or 収集
-              paraSheetLeft.value = restNameValue;
-              paraSheetLeftRegister.value = restNameValue;
-              
-              getSheetList("type.value",restNameValue);
-              //収集結果
-              let result: any = relationshipsDataArray.value.find(
-                  (item: any) => item.parameter.movement == movementName.value
-              );
-              if (result) {
-                let objData = {
-                  discard: { NORMAL: 0 },
-                  menu_name_ja: {
-                    LIST: [result.parameter.source_parameter],
-                  },
-                };
-                // パラメータシート定義一覧 restName
-                let restName: any = await restNameApi(objData);
-                let data = restName.data.data[0];
-                paraSheetCopySource.value = data.parameter.menu_name_en;
-                getSheetList("収集結果",data.parameter.menu_name_rest);
+            // 構築 or 収集
+            paraSheetLeft.value = restNameValue;
+            paraSheetLeftRegister.value = restNameValue;
 
-              }
-              // get table data left
-              if (restNameValue) {
-                getTableLeft(restNameValue);
-              }
+            getSheetList("type.value", restNameValue);
+            //収集結果
+            let result: any = relationshipsDataArray.value.find(
+              (item: any) => item.parameter.movement == ""
+            );
+            if (result) {
+              let objData = {
+                discard: { NORMAL: 0 },
+                menu_name_ja: {
+                  LIST: [result.parameter.source_parameter],
+                },
+              };
+              // パラメータシート定義一覧 restName
+              let restName: any = await restNameApi(objData);
+              let data = restName.data.data[0];
+              paraSheetCopySource.value = data.parameter.menu_name_en;
+              getSheetList("収集結果", data.parameter.menu_name_rest);
+
             }
-            
+            // get table data left
+            if (restNameValue) {
+              getTableLeft(restNameValue);
+            }
+          }
 
-            editvisible.value = true;
-          })
-          .catch((error: any) => {
-            ElMessage({
-              type: "error",
-              message: error,
-            });
+
+          editvisible.value = true;
+        })
+        .catch((error: any) => {
+          ElMessage({
+            type: "error",
+            message: error,
           });
+        });
     };
+
     // get sheet list
     let sheetRadios: Array<Radio> = reactive([]);
-    const getSheetList = (str: string,objval:string) => {
+    const getSheetList = (str: string, objval: string) => {
       try {
         let obj: Radio = {
           label: "",
           value: objval,
-          isFlagOne:false
         };
         if (str == "収集結果") {
           obj.label = paraSheetCopySource.value;
@@ -482,6 +428,7 @@ export default defineComponent({
         if (sheetRadios.length == 0) {
           operationRadios.length = 0;
         }
+
       } catch (error: any) {
         ElMessage({
           type: "error",
@@ -489,47 +436,13 @@ export default defineComponent({
         });
       }
     };
-    const getOperations = async (restNameValue: string) => {
-      let operationDataSetInfosByFlag: any[] = []; 
-      await getOperationDataSetInfosByFlag().then(async(res: any) => {
-        let data = res.data.data;
-        let defOperationIds: any[] = [];
-        data.forEach((element: any) => {
-          defOperationIds.push(element.parameter.Operation);
-        });
-        const senddata = {
-            discard: {
-              NORMAL: "0",
-            },
-            operation_id: {
-              LIST: defOperationIds,
-            }
-          };
-        await getDefOperationInfos(senddata).then(async (res_info: any) => {
-          let data = res_info.data.data;
-          data.forEach((element: any) => {
-            operationDataSetInfosByFlag.push(element.parameter.operation_name);
-        });
-        }).catch((err: any) => {
-        loadingShow.value = false;
-        ElMessage({
-          type: "error",
-          message: err,
-        });
-      });
-      }).catch((err: any) => {
-        loadingShow.value = false;
-        ElMessage({
-          type: "error",
-          message: err,
-        });
-      });
+    const getOperations = (restNameValue: string) => {
       let params = {
         discard: {
           NORMAL: "0",
         },
       };
-      await optionName(params, restNameValue)
+      optionName(params, restNameValue)
         .then((res: any) => {
           let data = res.data.data;
           let arr: any = [];
@@ -542,7 +455,6 @@ export default defineComponent({
             let obj: Radio = {
               label: el.parameter.operation_name_disp,
               value: el.parameter.operation_name_disp,
-              isFlagOne: operationDataSetInfosByFlag.indexOf(el.parameter.operation_name_disp) != -1
             };
             arr.push(obj);
           });
@@ -556,7 +468,7 @@ export default defineComponent({
           }, []);
           operationRadios.length = 0;
           arr1.forEach((el: any) => {
-            if (el.value !== loginOperation) {
+            if (el.value !== loginOperation.value && operationInfos.value.indexOf(el.value) != -1) {
               operationRadios.push(el);
             }
           });
@@ -574,12 +486,15 @@ export default defineComponent({
       props,
       (val, old) => {
         visible.value = val.dialogVisible;
+
         // eg:収集
-        type.value = val.type;
-        movementName.value = val.movementName;
+        parametersheetName.value = val.parametersheetName;
         if (visible.value) {
-          if (movementName.value) {
-            isGather.value = props.isGather
+          loginOperation.value = props.loginOperation
+          logOperationScheduledDate.value = props.logOperationScheduledDate
+          selectOpName.value = logOperationScheduledDate.value.slice(0, -3) + "_" + loginOperation.value
+          operationInfos.value = props.operationInfos
+          if (parametersheetName.value) {
             getMenuItem();
             operation.value = "";
             selectedValues.value = [];
@@ -594,14 +509,15 @@ export default defineComponent({
 
       host.forEach((el) => {
         let numObj = {
-            host_name: el,
-            num: 0,
-            managed_system_item_number: el.managed_system_item_number,
-          };
-          tableDataLeft.push(numObj);
-        })
-         
-        loadingShow.value = false;
+          host_name: el,
+          num: 0,
+          managed_system_item_number: el.managed_system_item_number,
+        };
+        tableDataLeft.push(numObj);
+      })
+
+      loadingShow.value = false;
+      // });
     };
 
     const getTableRight = (value: string) => {
@@ -609,16 +525,16 @@ export default defineComponent({
 
       host.forEach((el) => {
         let numObj = {
-            host_name: el,
-            num: 0,
-            managed_system_item_number: el.managed_system_item_number,
-          };
-          tableData.push(numObj);
-        })
-        loadingShowRightTable.value = false;
+          host_name: el,
+          num: 0,
+          managed_system_item_number: el.managed_system_item_number,
+        };
+        tableData.push(numObj);
+      })
+      loadingShowRightTable.value = false;
     };
     const cancel = () => {
-      bus.emit("cancelEditSheet");
+      bus.emit("cancelEditSheetSetting");
       visible.value = false;
       // upload error info
       errorImportFlag.value = false;
@@ -628,7 +544,6 @@ export default defineComponent({
       copyErrorFlag.value = false;
       copyErrorTableData.length = 0;
       isShow.value = false;
-
       if (instance.proxy.hostTable) {
         instance.proxy.hostTable.clearSelection();
       }
@@ -737,236 +652,101 @@ export default defineComponent({
       selectedHost = val;
     };
 
-    const handleCopy = () => {
+    const handleCopy = async () => {
       copyErrorTableData.length = 0;
       if (operation.value) {
-        let initoperation = operationRadios.find((item: any) => item.label == operation.value);
-        if (initoperation.isFlagOne) {
-          ElMessageBox.confirm(
-            "収集初期値管理用オペレーションを選択しているため、全てのホストに収集初期値管理で設定したパラメータを登録します。",
-            {
-              confirmButtonText: "OK",
-              cancelButtonText: "Cancel",
-              type: "warning",
-              customClass: "persdsd",
-              dangerouslyUseHTMLString: true,
-            }
-          ).then(() => {
-            const params1 = {
-              discard: {
-                NORMAL: "0",
-              },
-              operation_name_disp: {
-                LIST: [operation.value],
-              },
-            };
-            const optionsArr: Array<unknown> = [];
-            let host = store.getHost;
-            optionName(params1, paraSheetLeft.value).then((res: any) => {
-              let data = res.data.data;
-              data.forEach((baseObj: unknown) => {
-                host.forEach(async (itemHost: any) => {
-                  let obj1 = JSON.parse(JSON.stringify(baseObj));
-                  obj1.parameter.uuid = "";
-                  obj1.parameter.operation_name_select = selectName;
-                  obj1.parameter.host_name = itemHost.host_name;
-                  if (obj1.parameter.file) {
-                  } else {
-                    obj1.file = null;
-                  }
-                  optionsArr.push(obj1);
-                });
-              });
-
-              if (optionsArr.length == 0) {
-                ElMessage({
-                  type: "warning",
-                  message:
-                    "コピー元オペレーションにはコピー可能なパラメータがありません。",
-                });
-              } else {
-                optionAllRegister(optionsArr, paraSheetLeftRegister.value)
-                  .then((res: any) => {
-                    // update operation
-                    getTableLeft(paraSheetLeftRegister.value);
-                    // error table
-                    copyErrorFlag.value = false;
-                    let copystatus = {
-                      movementName: parametersheetvalue.value,
-                      value: paraSheetLeftRegister.value
-                    }
-                    emit("changestatus", copystatus);
-                    if (res.data.data.Register != "0") {
-                      editvisible.value = false;;
-                      getMenuItem(true)
-                      errormsg.value = "「" + paraSheet.value + "」の" + res.data.data.Register + "件パラメータがコピーされました。"
-                      errormsgshow.value = true;
-                      errormsgTableshow.value = false;
-                    } else {
-                      ElMessage({
-                        type: "warning",
-                        message:
-                          "コピー元オペレーションにはコピー可能なパラメータがありません。",
-                      });
-                    }
-                    copyDetail(copyErrorFlag.value);
-                  })
-                  .catch((err: any) => {
-                    let isJSONFlag = isJSON(err);
-                    copyDetail(copyErrorFlag.value);
-                    if (isJSONFlag) {
-                      copyErrorFlag.value = true;
-                      let error = JSON.parse(err);
-
-                      for (const key in error) {
-                        let obj: any = {};
-                        obj.serialNum = key;
-                        if (Object.prototype.hasOwnProperty.call(error, key)) {
-                          const element = error[key];
-                          for (const key in element) {
-                            if (Object.prototype.hasOwnProperty.call(element, key)) {
-                              const elementInner = element[key];
-
-                              obj.title = key;
-                              obj.content = elementInner[0];
-                              copyErrorTableData.push(obj);
-                            }
-                          }
-                        }
-                      }
-                      errormsg.value = "「" + paraSheet.value + "」のパラメータコピーに失敗します。"
-                      errormsgshow.value = true;
-                      errormsgTableshow.value = true;
-                    } else {
-                      errormsg.value = "「" + paraSheet.value + "」のパラメータコピーに失敗します。"
-                      errormsgshow.value = true;
-                      errormsgTableshow.value = true;
-                    }
-                  });
-              }
-            });
-          })
-        } else {
-          if (selectedValues.value) {
-            let hostList = selectedValues.value;
-            if (hostList.length == 0) {
-              ElMessage({
-                type: "warning",
-                message:
-                  "コピー対象のホストが選択されていません。１つ以上のホストを選択してください。",
-              });
+        deviceListData = [];
+        await getDeviceList();
+        const params1 = {
+          discard: {
+            NORMAL: "0",
+          },
+          operation_name_disp: {
+            LIST: [operation.value],
+          },
+        };
+        const optionsArr: Array<unknown> = [];
+        optionName(params1, paraSheetLeft.value).then((res: any) => {
+          let data = res.data.data;
+          for (let index = 0; index < data.length; index++) {
+            const baseObj = data[index];
+            let obj1 = JSON.parse(JSON.stringify(baseObj));
+            obj1.parameter.uuid = "";
+            obj1.parameter.operation_name_select = selectOpName.value;
+            obj1.parameter.host_name = deviceListData[0].host_name;
+            if (obj1.parameter.file) {
             } else {
-              const params1 = {
-                discard: {
-                  NORMAL: "0",
-                },
-                operation_name_disp: {
-                  LIST: [operation.value],
-                },
-              };
-              const optionsArr: Array<unknown> = [];
-              let host = store.getHost;
-              optionName(params1, paraSheetLeft.value).then((res: any) => {
-                let data = res.data.data;
-                data.forEach((baseObj: unknown) => {
-                  hostList.forEach(async (itemHost: any) => {
-                    let obj1 = JSON.parse(JSON.stringify(baseObj));
-                    host.forEach((el) => {
-                      if (el.host_name == obj1.parameter.host_name) {
-                        if (itemHost == el.managed_system_item_number) {
-                          obj1.parameter.uuid = "";
-                          obj1.parameter.operation_name_select = selectName;
-                          if (obj1.parameter.file) {
-                          } else {
-                            obj1.file = null;
-                          }
-                          optionsArr.push(obj1);
-                        } else if (el.managed_system_item_number == itemHost.hostgroup_id) {
-                          obj1.parameter.uuid = "";
-                          obj1.parameter.operation_name_select = selectName;
-                          if (obj1.parameter.file) {
-                          } else {
-                            obj1.file = null;
-                          }
-                          optionsArr.push(obj1);
-                        } else {
-                        }
-                      }
-                    })
-                  });
-                });
-
-                if (optionsArr.length == 0) {
+              obj1.file = null;
+            }
+            optionsArr.push(obj1);
+          }
+          if (optionsArr.length == 0) {
+            ElMessage({
+              type: "warning",
+              message:
+                "コピー元オペレーションにはコピー可能なパラメータがありません。",
+            });
+          } else {
+            optionAllRegister(optionsArr, paraSheetLeftRegister.value)
+              .then((res: any) => {
+                // update operation
+                getTableLeft(paraSheetLeftRegister.value);
+                // error table
+                copyErrorFlag.value = false;
+                let copystatus = {
+                  parametersheetName: parametersheetvalue.value,
+                  value: paraSheetLeftRegister.value
+                }
+                emit("changestatus", copystatus);
+                if (res.data.data.Register != "0") {
+                  editvisible.value = false;;
+                  getMenuItem(true)
+                  errormsg.value = "「" + paraSheet.value + "」の" + res.data.data.Register + "件パラメータがコピーされました。"
+                  errormsgshow.value = true;
+                  errormsgTableshow.value = false;
+                } else {
                   ElMessage({
                     type: "warning",
                     message:
                       "コピー元オペレーションにはコピー可能なパラメータがありません。",
                   });
-                } else {
-                  optionAllRegister(optionsArr, paraSheetLeftRegister.value)
-                    .then((res: any) => {
-                      // update operation
-                      getTableLeft(paraSheetLeftRegister.value);
-                      // error table
-                      copyErrorFlag.value = false;
-                      let copystatus = {
-                        movementName: parametersheetvalue.value,
-                        value: paraSheetLeftRegister.value
-                      }
-                      emit("changestatus", copystatus);
-                      if (res.data.data.Register != "0") {
-                        editvisible.value = false;;
-                        getMenuItem(true)
-                        errormsg.value = "「" + paraSheet.value + "」の" + res.data.data.Register + "件パラメータがコピーされました。"
-                        errormsgshow.value = true;
-                        errormsgTableshow.value = false;
-                      } else {
-                        ElMessage({
-                          type: "warning",
-                          message:
-                            "コピー元オペレーションにはコピー可能なパラメータがありません。",
-                        });
-                      }
-                      copyDetail(copyErrorFlag.value);
-                    })
-                    .catch((err: any) => {
-                      let isJSONFlag = isJSON(err);
-                      copyDetail(copyErrorFlag.value);
-                      if (isJSONFlag) {
-                        copyErrorFlag.value = true;
-                        let error = JSON.parse(err);
+                }
+                copyDetail(copyErrorFlag.value);
+              })
+              .catch((err: any) => {
+                let isJSONFlag = isJSON(err);
+                copyDetail(copyErrorFlag.value);
+                if (isJSONFlag) {
+                  copyErrorFlag.value = true;
+                  let error = JSON.parse(err);
 
-                        for (const key in error) {
-                          let obj: any = {};
-                          obj.serialNum = key;
-                          if (Object.prototype.hasOwnProperty.call(error, key)) {
-                            const element = error[key];
-                            for (const key in element) {
-                              if (Object.prototype.hasOwnProperty.call(element, key)) {
-                                const elementInner = element[key];
+                  for (const key in error) {
+                    let obj: any = {};
+                    obj.serialNum = key;
+                    if (Object.prototype.hasOwnProperty.call(error, key)) {
+                      const element = error[key];
+                      for (const key in element) {
+                        if (Object.prototype.hasOwnProperty.call(element, key)) {
+                          const elementInner = element[key];
 
-                                obj.title = key;
-                                obj.content = elementInner[0];
-                                copyErrorTableData.push(obj);
-                              }
-                            }
-                          }
+                          obj.title = key;
+                          obj.content = elementInner[0];
+                          copyErrorTableData.push(obj);
                         }
-                        errormsg.value = "「" + paraSheet.value + "」のパラメータコピーに失敗します。"
-                        errormsgshow.value = true;
-                        errormsgTableshow.value = true;
-                      } else {
-                        errormsg.value = "「" + paraSheet.value + "」のパラメータコピーに失敗します。"
-                        errormsgshow.value = true;
-                        errormsgTableshow.value = true;
                       }
-                    });
+                    }
+                  }
+                  errormsg.value = "「" + paraSheet.value + "」のパラメータコピーに失敗します。"
+                  errormsgshow.value = true;
+                  errormsgTableshow.value = true;
+                } else {
+                  errormsg.value = "「" + paraSheet.value + "」のパラメータコピーに失敗します。"
+                  errormsgshow.value = true;
+                  errormsgTableshow.value = true;
                 }
               });
-            }
           }
-        }
-
+        });
       } else {
         ElMessage({
           type: "warning",
@@ -974,27 +754,26 @@ export default defineComponent({
         });
       }
     };
-
     // export event
     function exportLeft() {
       isDisabledRight.value = true;
       let obj = {
         discard: { NORMAL: "0" },
-        operation_name_disp: { LIST: [loginOperation] },
+        operation_name_disp: { LIST: [loginOperation.value] },
       };
       exportExcelAPI(obj, paraSheetLeftRegister.value).then(async (res: any) => {
         let base64Code = res.data.data;
-        dataURLtoDownload(base64Code, paraSheet.value + "_" + loginOperation + ".xlsx");
+        dataURLtoDownload(base64Code, paraSheet.value + "_" + loginOperation.value + ".xlsx");
       });
     }
     function exportLeftJson() {
       let obj = {
         discard: { NORMAL: "0" },
-        operation_name_disp: { LIST: [loginOperation] },
+        operation_name_disp: { LIST: [loginOperation.value] },
       };
       optionName(obj, paraSheetLeftRegister.value).then(async (res: any) => {
         let code = res.data.data;
-        downloadJson(paraSheet.value + "_" + loginOperation + ".json", code);
+        downloadJson(paraSheet.value + "_" + loginOperation.value + ".json", code);
       });
     }
     function exportRightJson() {
@@ -1124,7 +903,7 @@ export default defineComponent({
                 getTableLeft(rowData.value);
 
                 let copystatus = {
-                  movementName: parametersheetvalue.value,
+                  parametersheetName: parametersheetvalue.value,
                   value: rowData.value
                 }
                 emit("changestatus", copystatus);
@@ -1180,7 +959,7 @@ export default defineComponent({
 
                 getTableLeft(rowData.value);
                 let copystatus = {
-                  movementName: parametersheetvalue.value,
+                  parametersheetName: parametersheetvalue.value,
                   value: rowData.value
                 }
                 emit("changestatus", copystatus);
@@ -1301,28 +1080,28 @@ export default defineComponent({
 
     const disabledAll: any = ref(false);
     const parametersheetChange = ((value: any) => {
-      movementName.value = value;
+      parametersheetName.value = value;
       operation.value = "";
       selectedValues.value = [];
       disabledAll.value = true;
       editvisible.value = false;
       isBtnDisable.value = true;
-      
+
       if (Object.keys(uploadFileCopy).length !== 0) {
         upload.value!.clearFiles();
         uploadFileCopy = {};
       }
-      
+
       errorImportFlag.value = false;
       errorImportTableData.length = 0;
-      bus.emit("parametersheetChange");
+      bus.emit("parametersheetChangeSetting");
       getMenuItem();
     });
     const messagecancel = (() => {
       errormsgshow.value = false;
       errormsgTableshow.value = false;
     });
-    
+
     const isBtnDisable: any = ref(false);
 
     const setButtonStatus = ((val: boolean) => {
@@ -1331,33 +1110,37 @@ export default defineComponent({
 
     const register = (() => {
       isBtnDisable.value = true;
-      bus.emit("register");
+      bus.emit("registerSetting");
     })
 
     const editSheetchangestatus = ((val: any) => {
       let copystatus = {
-        movementName: parametersheetvalue.value,
+        parametersheetName: parametersheetvalue.value,
         value: val.value
       }
       emit("changestatus", copystatus);
     })
     const editvisible: any = ref(false);
-    const checked1 = ref(true);
-    const isGather = ref(true);
-    const checkBoxChange = (value: boolean) => {
-      operation.value = ''
-    };
-    const copyOperationChange = ((value: any) => {
-      if (operationRadios.length != 0) {
-        let result: any = operationRadios.find(
-          (item: any) => value == item.value);
-        isInitOperation.value = result.isFlagOne;
-      } else {
-        isInitOperation.value = false;
-      }
-      
-      
-    })
+    async function getDeviceList() {
+      await deviceList("device_list")
+        .then((res: any) => {
+          let arr1 = res.data.data;
+          if (arr1.length) {
+            arr1.forEach((element: any) => {
+              deviceListData.push(element.parameter);
+            });
+            deviceListData.sort((a: any, b: any) => {
+              return Date.parse(a["last_update_date_time"]) - Date.parse(b["last_update_date_time"]);
+            });
+          }
+        })
+        .catch((error: any) => {
+          ElMessage({
+            type: "error",
+            message: error,
+          });
+        });
+    }
     return {
       cancel,
       loadingShow,
@@ -1365,7 +1148,7 @@ export default defineComponent({
       paramsSheetValue,
       paraSheetLeft,
       paraSheetLeftRegister,
-      movementName,
+      parametersheetName,
       change,
       changeEdit,
       exportLeft,
@@ -1435,11 +1218,8 @@ export default defineComponent({
       editSheetchangestatus,
       logOperationScheduledDate,
       isShowditSheet,
-      checked1,
-      isGather,
-      checkBoxChange,
-      isInitOperation,
-      copyOperationChange,
+      selectOpName,
+      deviceListData
     };
   },
 });
@@ -1467,6 +1247,7 @@ export default defineComponent({
     border-color: #0960bd;
   }
 }
+
 .selectDivider {
   .el-divider--horizontal {
     margin: 0;
@@ -1632,7 +1413,6 @@ export default defineComponent({
     border-color: #418d45 !important;
   }
 }
-
 </style>
 <style lang="less">
 .detailBoxSheet {
@@ -1711,9 +1491,10 @@ export default defineComponent({
     opacity: 0.8;
   }
 }
+
 .el-popconfirm {
   .el-popconfirm__action {
-    .el-button + .el-button {
+    .el-button+.el-button {
       margin-left: 12px !important;
     }
   }

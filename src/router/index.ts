@@ -43,6 +43,13 @@ const routes = [
               title: "ジョブ一覧",
             },
           },
+          {
+            path: "/setting/operationmanagement",
+            component: () => import("../view/setting/operationManagement.vue"),
+            meta: {
+              title: "収集初期値管理",
+            },
+          },
         ],
       },
 

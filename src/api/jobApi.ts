@@ -323,3 +323,50 @@ export function setOperationDataSetInfos(data: any) {
     data,
   });
 }
+
+/**
+ * 入力用DefOperationDataSetの情報を取得
+ * @param data Flag==1
+ * @returns OperationDataSetの情報
+ */
+export function getOperationDataSetInfosByFlag(Flag:any = 1) {
+  const orgId = localStorage.getItem("organization");
+  const workspaceId = localStorage.getItem("workspace");
+  
+  const data = {
+    discard: {
+      NORMAL: "0",
+    },
+    "Flag": {
+      "NORMAL": Flag
+    }
+  };
+  return service({
+    url:
+      Api.Api +
+      orgId +
+      "/workspaces/" +
+      workspaceId +
+      '/ita/menu/OperationDataSet/filter/',
+    method: "POST",
+    data,
+  });
+  
+}
+
+export function getDefOperationInfos(data: any) {
+  const orgId = localStorage.getItem("organization");
+  const workspaceId = localStorage.getItem("workspace");
+  
+  return service({
+    url:
+      Api.Api +
+      orgId +
+      "/workspaces/" +
+      workspaceId +
+      "/ita/menu" +
+      "/operation_list/filter/",
+    method: "POST",
+    data,
+  });
+}

@@ -38,7 +38,7 @@ export default defineComponent({
   display: flex;
   height: 100%;
   .menu {
-    max-width: 163px;
+    max-width: 172px;
     background-color: #0c2135;
   }
   .content {

@@ -125,3 +125,48 @@ export function getCompareResults(data: any,str_url:string) {
     data
   });
 }
+
+/**
+ * 入力用DefOperationDataSetの情報を取得
+ * @param data
+ * @returns OperationDataSetの情報
+ */
+export function getDefOperationDataSetInfos(data:any) {
+  const orgId = localStorage.getItem("organization");
+  const workspaceId = localStorage.getItem("workspace");
+  
+  return service({
+    url:
+      Api.Api +
+      orgId +
+      "/workspaces/" +
+      workspaceId +
+      '/ita/menu/OperationDataSet/filter/',
+    method: "POST",
+    data,
+  });
+}
+
+export function operationListForFlag(operation_ids: any) {
+  const orgId = localStorage.getItem("organization");
+  const workspaceId = localStorage.getItem("workspace");
+  const data = {
+    discard: {
+      NORMAL: "0",
+    },
+    operation_id:{
+      LIST : operation_ids
+    }
+  };
+  return service({
+    url:
+      Api.Api +
+      orgId +
+      "/workspaces/" +
+      workspaceId +
+      "/ita/menu" +
+      "/operation_list/filter/",
+    method: "POST",
+    data,
+  });
+}

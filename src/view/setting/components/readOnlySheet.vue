@@ -25,7 +25,7 @@ import jSpreadSheet from "jspreadsheet-ce";
 import "jspreadsheet-ce/dist/jspreadsheet.css";
 import "jsuites/dist/jsuites.css";
 
-import { ElDialog, ElMessage, arrowMiddleware } from "element-plus";
+import { ElDialog, ElMessage,} from "element-plus";
 import { optionName, sheetColumnList } from "../../../api/jobApi";
 import {
   Download,
@@ -33,7 +33,7 @@ import {
 import { eventBus } from "../../../store/eventBus";
 export default defineComponent({
   name: "readOnlySheet",
-  props: ["dialogVisibleSheet", "readOperation", "readParams", "movementName","isInitOperation"],
+  props: ["dialogVisibleSheet", "readOperation", "readParams", "movementName"],
   emits: ["change"],
   components: {
     ElDialog,
@@ -56,7 +56,6 @@ export default defineComponent({
     let parameter = ref(props.readParams);
     let operation = ref(props.readOperation);
     let movement = ref(props.movementName);
-    let isInitOperation = ref(props.isInitOperation);
     const spreadsheet: any = ref(null);
     let sheetWidth: any = ref("");
     onMounted(() => {
@@ -201,7 +200,6 @@ export default defineComponent({
       parameter.value = val.readParams;
       operation.value = val.readOperation;
       movement.value = val.movementName;
-      isInitOperation.value = val.isInitOperation;
       if (operation.value) {
         await getColumns(parameter.value);
         await getJsonData(parameter.value, operation.value);
@@ -247,13 +245,6 @@ export default defineComponent({
       title: "パラメータ",
       colspan: "",
     };
-    //ホスト名
-    const headerFirst = [
-      {
-        title: "",
-        colspan: "1",
-      },
-    ];
 
     const headerOperationGroup = {
       title: "オペレーション",
@@ -343,8 +334,8 @@ export default defineComponent({
       while (spreadsheet.value?.firstChild) {
         spreadsheet.value.removeChild(spreadsheet.value.firstChild);
       }
-      bus.off_all("exportRight");
-      bus.off_all("exportRightJson");
+      bus.off_all("exportRightSetting");
+      bus.off_all("exportRightJsonSetting");
     });
 
     let matchingG = new RegExp("g");
@@ -407,54 +398,26 @@ export default defineComponent({
                       loopData[j].push(data);
                     });
                     if (inputOrder) {
-                      if (isInitOperation.value) {
-                        arr[j] = [
-                          // parameter is Variable
-                          {
-                            title: "",
-                            colspan: "1",
-                          },
-                          // Head first row
-                          headerRowArray[j],
-                          headerOperationGroup,
-                          ...headerThird,
-                        ];
-                      } else {
-                        arr[j] = [
-                          ...headerFirst,
-                          // parameter is Variable
-                          {
-                            title: "",
-                            colspan: "1",
-                          },
-                          // Head first row
-                          headerRowArray[j],
-                          headerOperationGroup,
-                          ...headerThird,
-                        ];
-                      }
-
+                      arr[j] = [
+                        // parameter is Variable
+                        {
+                          title: "",
+                          colspan: "1",
+                        },
+                        // Head first row
+                        headerRowArray[j],
+                        headerOperationGroup,
+                        ...headerThird,
+                      ];
                     } else {
-                      if (isInitOperation.value) {
-                        arr[j] = [
-                          // parameter is Variable
+                      arr[j] = [
+                        // parameter is Variable
 
-                          // Head first row
-                          headerRowArray[j],
-                          headerOperationGroup,
-                          ...headerThird,
-                        ];
-                      } else {
-                        arr[j] = [
-                          ...headerFirst,
-                          // parameter is Variable
-
-                          // Head first row
-                          headerRowArray[j],
-                          headerOperationGroup,
-                          ...headerThird,
-                        ];
-                      }
+                        // Head first row
+                        headerRowArray[j],
+                        headerOperationGroup,
+                        ...headerThird,
+                      ];
                     }
                     if (headerRowArray.length == 1) {
                       nestedHeaders.length = 0;
@@ -490,47 +453,22 @@ export default defineComponent({
                     headerRowArray[j] = headerSecondRow;
 
                     if (arr.length < Object.keys(data1).length) {
-                      var arr3: any = []
                       if (inputOrder) {
-                        if (isInitOperation.value) {
-                          arr3 = [
-                            {
-                              title: "",
-                              colspan: "1",
-                            },
-                            ...headerRowArray[j],
-                            ...headerSecond,
-                            ...headerThird,
-                          ];
-                        } else {
-                          arr3 = [
-                            ...headerFirst,
-                            {
-                              title: "",
-                              colspan: "1",
-                            },
-                            ...headerRowArray[j],
-                            ...headerSecond,
-                            ...headerThird,
-                          ];
-                        }
-                        
+                        var arr3: any = [
+                          {
+                            title: "",
+                            colspan: "1",
+                          },
+                          ...headerRowArray[j],
+                          ...headerSecond,
+                          ...headerThird,
+                        ];
                       } else {
-                        if (isInitOperation.value) {
-                          arr3 = [
+                        arr3 = [
                           ...headerRowArray[j],
                           ...headerSecond,
                           ...headerThird,
                         ];
-                        } else {
-                          arr3 = [
-                          ...headerFirst,
-                          ...headerRowArray[j],
-                          ...headerSecond,
-                          ...headerThird,
-                        ];
-                        }
-                        
                       }
 
                       arr.push(arr3);
@@ -579,9 +517,7 @@ export default defineComponent({
                 if (element.column_name_rest == "uuid") {
                   adminColumn.push(obj3);
                 } else if (element.column_name_rest == "host_name") {
-                  if (isInitOperation.value) {
-                    obj3.type = "hidden";
-                  }
+                  obj3.type = "hidden";
                   columns.splice(0, 0, obj3);
                 } else if (element.column_name_rest == "input_order") {
                   obj3.width = 118;
@@ -682,10 +618,10 @@ export default defineComponent({
       return result;
     }
     function exportRight() {
-      bus.emit("exportRight",true);
+      bus.emit("exportRightSetting",true);
     }
     function exportRightJson() {
-      bus.emit("exportRightJson",true);
+      bus.emit("exportRightJsonSetting",true);
     }
     return {
       visible,

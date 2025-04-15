@@ -41,6 +41,9 @@
       <el-menu-item index="/setting/joblist"
         ><el-icon> <Operation /> </el-icon>ジョブ一覧</el-menu-item
       >
+      <el-menu-item index="/setting/operationmanagement"
+        ><el-icon><Operation /></el-icon>収集初期値管理</el-menu-item
+      >
     </el-sub-menu>
 
     <el-menu-item index="/confirm">
@@ -112,7 +115,7 @@ export default defineComponent({
   display: flex;
   flex-direction: row;
   align-items: center;
-  max-width: 163px;
+  max-width: 172px;
 
   img:nth-child(1) {
     width: 110%;

@@ -1,8 +1,5 @@
 <template>
-  <div
-    class="steps-fourth"
-    element-loading-text="loading..."
-  >
+  <div class="steps-fourth" element-loading-text="loading...">
     <p>
       指定されたMovementに紐づくパラメータシートに、作成したオペレーションを使ってパラメータを登録します。
     </p>
@@ -10,76 +7,50 @@
     <el-card shadow="never">
       <h3>パラメータ一括コピー</h3>
       <div class="topCardBox">
-        <div class="tabBox">
+        <div v-if="!isGather" class="tabBox">
           <p>コピー元パラメータシート種別</p>
-
           <el-radio-group v-model="activeName" class="ml-4" @change="changType" :disabled="isDisabled">
             <el-radio border label="収集結果">収集結果</el-radio>
-            <el-radio border label="構築">構築/収集</el-radio>
+            <el-radio border label="構築">構築</el-radio>
           </el-radio-group>
         </div>
+        <div v-else-if="isGather" class="tabBox">
+          <p>　　　　　　　　　　　　　　　　　</p>
+        </div>
         <div class="originCopy">
-          <p>コピー元オペレーション名</p>
-          <el-select
-            v-model="operation"
-            filterable
-            class="m-2"
-            placeholder="Select"
-            @change="changeoperation"
-            :disabled="isDisabled"
-          >
-            <el-option
-              v-for="item in operationOptions"
-              :key="item.value"
-              :label="item.label"
-              :value="item.label"
-            />
+          <!-- <p>コピー元オペレーション名<el-switch v-model="switchValue" size="default" inactive-text="　"
+            style="--el-switch-on-color: #0960bd;" /></p> -->
+          <p>コピー元オペレーション名<el-checkbox v-if="isCheckBoxShow" v-model="checked1" label="収集初期値管理のみ表示"
+              style="--el-checkbox-checked-text-color:#0960bd;vertical-align:middle;margin-left: 25px;" size="small"
+              @change="checkBoxChange" />
+          </p>
+          <el-select v-model="operation" filterable class="m-2" placeholder="コピー元オペレーション名" @change="changeoperation"
+            :disabled="isDisabled || loadingShow" >
+            <el-option v-for="item in operationOptions" :key="item.value" :label="item.label" :value="item.label" :style="{ display: isGather? (isCheckBoxShow && checked1? (item.isFlagOne ? 'list-item':'none'):'list-item') : !item.isFlagOne ? 'list-item':'none'}"/>
           </el-select>
         </div>
+
         <div>
-          <el-button
-            type="primary"
-            class="copyAll"
-            @click="handleCopy"
-            :loading="copyLoading"
-            :disabled="isDisabled"
-            ><el-icon> <DocumentCopy /> </el-icon>&nbsp; 一括コピー</el-button
-          >
+          <el-button type="primary" class="copyAll" @click="handleCopy" :loading="copyLoading"
+            :disabled="isDisabled"><el-icon>
+              <DocumentCopy />
+            </el-icon>&nbsp; 一括コピー</el-button>
           <div id="deleteAllBtn">
-            <el-button
-              type="primary"
-              class="deleteAll"
-              @click="handleDeleteEvent"
-              :loading="deleteLoading"
-              :disabled="isDisabled"
-              ><el-icon> <Delete /> </el-icon>&nbsp; 一括削除</el-button
-            >
+            <el-button type="primary" class="deleteAll" @click="handleDeleteEvent" :loading="deleteLoading"
+              :disabled="isDisabled"><el-icon>
+                <Delete />
+              </el-icon>&nbsp; 一括削除</el-button>
           </div>
         </div>
       </div>
     </el-card>
-    <el-table
-      v-loading="loadingShow || deleteLoading || copyLoading"
-      @row-click="rowClick"
-      element-loading-text="loading..."
-      ref="movementTable"
-      :data="movementTableData"
-      border
-      :height="tableHeight"
-      :row-style="rowClass"
-      style="width: 100%"
-      @selection-change="handleChangeMovement"
-      :row-key="getRowKeys"
-      :row-height="27"
-    >
+    <el-table v-loading="loadingShow || deleteLoading || copyLoading" @row-click="rowClick"
+      element-loading-text="loading..." ref="movementTable" :data="movementTableData" border :height="tableHeight"
+      :row-style="rowClass" style="width: 100%" @selection-change="handleChangeMovement" :row-key="getRowKeys"
+      :row-height="27">
       <el-table-column type="selection" width="55" :reserve-selection="true" />
       <template v-for="(item, index) in movemenetColumns" :key="index">
-        <el-table-column
-          v-if="item.dataIndex === 'edit'"
-          :label="item.title"
-          width="100"
-          align="center"
-        >
+        <el-table-column v-if="item.dataIndex === 'edit'" :label="item.title" width="100" align="center">
           <template #default="scope">
             <el-tooltip class="box-item" effect="light" content="編集" placement="left">
               <el-icon size="20px" color="#002B62" @click="openCopyDetail(scope.row)">
@@ -87,43 +58,20 @@
               </el-icon>
             </el-tooltip>
 
-            <el-tooltip
-              v-if="isErrorFlag[scope.row.movement]"
-              ref="tooltip"
-              :disabled="tooltipShow"
-              effect="dark"
-              content="エラー詳細"
-              placement="top"
-            >
+            <el-tooltip v-if="isErrorFlag[scope.row.movement]" ref="tooltip" :disabled="tooltipShow" effect="dark"
+              content="エラー詳細" placement="top">
               <div style="display: inline">
-                <el-popover
-                  @before-leave="closeTooltip"
-                  ref="popover"
-                  placement="right"
-                  width="50%"
-                  trigger="click"
-                >
+                <el-popover @before-leave="closeTooltip" ref="popover" placement="right" width="50%" trigger="click">
                   <template #reference>
                     <el-icon @click="closeTooltip" size="20px" style="margin-left: 17px">
                       <Warning style="cursor: pointer" color="red" />
                     </el-icon>
                   </template>
                   <div class="errorTable">
-                    <el-table
-                      :data="errorTableData[scope.row.movement]"
-                      border
-                      height="150px"
-                      style="width: 100%; overflow-x: scroll"
-                    >
-                      <el-table-column
-                        width="150"
-                        prop="title"
-                        label="エラー列"
-                      ></el-table-column>
-                      <el-table-column
-                        prop="content"
-                        label="エラー内容"
-                      ></el-table-column>
+                    <el-table :data="errorTableData[scope.row.movement]" border height="150px"
+                      style="width: 100%; overflow-x: scroll">
+                      <el-table-column width="150" prop="title" label="エラー列"></el-table-column>
+                      <el-table-column prop="content" label="エラー内容"></el-table-column>
                     </el-table>
                   </div>
                 </el-popover>
@@ -132,62 +80,32 @@
           </template>
         </el-table-column>
 
-        <el-table-column
-          v-else-if="item.dataIndex === 'params'"
-          :prop="item.dataIndex"
-          :label="item.title"
-        >
-          <template #default="scope"
-            ><span @click="openCopyDetail(scope.row)" style="cursor: pointer">{{
+        <el-table-column v-else-if="item.dataIndex === 'params'" :prop="item.dataIndex" :label="item.title">
+          <template #default="scope"><span @click="openCopyDetail(scope.row)" style="cursor: pointer">{{
               scope.row.params
-            }}</span></template
-          >
+              }}</span></template>
         </el-table-column>
 
-        <el-table-column
-          width="180"
-          v-else-if="item.dataIndex === 'status'"
-          :prop="item.dataIndex"
-          :label="item.title"
-        >
-          <template #default="scope"
-            ><span :class="scope.row.status == '未登録' ? 'notFinished' : 'finished'">{{
+        <el-table-column width="180" v-else-if="item.dataIndex === 'status'" :prop="item.dataIndex" :label="item.title">
+          <template #default="scope"><span :class="scope.row.status == '未登録' ? 'notFinished' : 'finished'">{{
               scope.row.status
-            }}</span></template
-          >
+              }}</span></template>
         </el-table-column>
-        <el-table-column
-          width="180"
-          v-else-if="item.dataIndex === 'num'"
-          :prop="item.dataIndex"
-          :label="item.title"
-        >
-          <template #default="scope"
-            ><span :class="scope.row.num == '0' ? 'notFinished' : 'finished'">{{
+        <el-table-column width="180" v-else-if="item.dataIndex === 'num'" :prop="item.dataIndex" :label="item.title">
+          <template #default="scope"><span :class="scope.row.num == '0' ? 'notFinished' : 'finished'">{{
               scope.row.num
-            }}</span></template
-          >
+              }}</span></template>
         </el-table-column>
-        <el-table-column
-          v-else-if="item.dataIndex != 'copy'"
-          :prop="item.dataIndex"
-          :label="item.title"
-          :width="item.dataIndex == 'num' ? 180 : ''"
-        />
+        <el-table-column v-else-if="item.dataIndex != 'copy'" :prop="item.dataIndex" :label="item.title"
+          :width="item.dataIndex == 'num' ? 180 : ''" />
       </template>
     </el-table>
 
-    <p v-if="loadingShow|| deleteLoading || copyLoading" class="progressBox">{{ progress }} / {{ total }}</p>
+    <p v-if="loadingShow || deleteLoading || copyLoading" class="progressBox">{{ progress }} / {{ total }}</p>
 
-    <DialogDetail
-      :dialogVisible="dialogVisible"
-      @change="change"
-      @changestatus="changestatus"
-      @changestatusString="changestatusString"
-      :type="activeName"
-      :movementName="movementName"
-      :parametersheet = "parametersheet"
-    />
+    <DialogDetail :dialogVisible="dialogVisible" @change="change" @changestatus="changestatus"
+      @changestatusString="changestatusString" :type="activeName" :movementName="movementName"
+      :parametersheet="parametersheet" :isGather="isGather" />
   </div>
 </template>
 
@@ -196,10 +114,8 @@ import {
   defineComponent,
   reactive,
   ref,
-  watch,
   onMounted,
   onActivated,
-  getCurrentInstance,
   onBeforeUnmount,
 } from "vue";
 import DialogDetail from "./operationCopyDetail.vue";
@@ -211,16 +127,15 @@ import {
   optionAllRegister,
   getOperationCount,
   relationships,
+  getOperationDataSetInfosByFlag
 } from "../../api/jobApi";
 import { operationList } from "../../api/jobList";
 import { Edit, DocumentCopy, Warning, Delete } from "@element-plus/icons-vue";
-import { useRouter, useRoute } from "vue-router";
+import { useRouter, } from "vue-router";
 import { eventBus } from "../../store/eventBus";
 import {
   ElMessage,
-  ElTable,
   ElSelect,
-  ElCard,
   ElPopover,
   ElTooltip,
   ElMessageBox,
@@ -251,6 +166,7 @@ export default defineComponent({
     ElTooltip,
   },
   setup(props, { emit }) {
+    const switchValue = ref(false);
     //  progress
     const progress = ref(0);
     const total = ref(0);
@@ -285,7 +201,7 @@ export default defineComponent({
     let conductor = store.getConductor;
 
     const relationshipsData = ref([]);
-    const isDisabled : any = ref(false)
+    const isDisabled: any = ref(false)
 
     // get Replication relationships
     const getRelationships = () => {
@@ -354,9 +270,9 @@ export default defineComponent({
     let movementLast = store.getMovement;
 
     onBeforeUnmount(() => {
-      bus.off("copyDetail", () => {});
-      bus.off("ceEdit", () => {});
-      bus.off("uploadCopy", () => {});
+      bus.off("copyDetail", () => { });
+      bus.off("ceEdit", () => { });
+      bus.off("uploadCopy", () => { });
     });
     let selectName = store.getOperationSelect;
 
@@ -371,6 +287,7 @@ export default defineComponent({
     let movementName = ref("");
     let parametersheet: any = reactive([]);
     const getMenuItem = async () => {
+      let hasBuildr = false;
       progress.value = 0;
       loadingShow.value = true;
       parametersheet.length = 0;
@@ -424,7 +341,7 @@ export default defineComponent({
               menu_definition_list.forEach((el: any) => {
                 let enNameValue = el.parameter.menu_name_en;
                 let restNameValue = el.parameter.menu_name_rest;
-                input_data_menu_definition[enNameValue] = { "enNameValue": enNameValue, "restNameValue": restNameValue };
+                input_data_menu_definition[enNameValue] = { "enNameValue": enNameValue, "restNameValue": restNameValue, menu_group_for_input:el.parameter.menu_group_for_input};
               });
             }
           }
@@ -450,6 +367,7 @@ export default defineComponent({
           }
           let enNameValue = input_data_menu_definition[enNameValue_tmp]["enNameValue"];
           let restNameValue = input_data_menu_definition[enNameValue_tmp]["restNameValue"];
+          let menu_group_for_input = input_data_menu_definition[enNameValue_tmp]["menu_group_for_input"];
           let loginOperation = store.getLoginOperation;
           let params2 = {
             discard: {
@@ -474,14 +392,16 @@ export default defineComponent({
             obj3.num = 0;
             obj3.status = "未登録";
           }
-
+          if ("入力用/収集" != menu_group_for_input) {
+            hasBuildr = true
+          }
           obj3.movement = el.movement_name;
           obj3.params = enNameValue;
           obj3.value = restNameValue;
           movementTableData.value[index] = obj3;
           let parametersheet_obj = {
             value: el.movement_name,
-            label:enNameValue,
+            label: enNameValue,
           }
           parametersheet.push(parametersheet_obj)
         } catch (error: any) {
@@ -493,6 +413,22 @@ export default defineComponent({
       }
 
       loadingShow.value = false;
+      isGather.value = !hasBuildr;
+      isCheckBoxShow.value = isGather.value;
+      for (let index = 0; index < operationOptions.length; index++) {
+        const element = operationOptions[index];
+        if (!isGather.value) {
+          if (!element.isFlagOne) {
+            operation.value = element.label;
+            break;
+          }
+        } else {
+          if (element.isFlagOne) {
+            operation.value = element.label;
+            break;
+          }
+        }
+      }
       emit("changeOperationLoading", false);
       emit("changeSecond", movementTableData.value);
     };
@@ -530,8 +466,21 @@ export default defineComponent({
     // get sheet list
     let operationOptions: any = reactive([]);
     // コピー元オペレーション名
-    const getOperations = (conductor: string) => {
-      operationList()
+    const getOperations = async (conductor: string) => {
+      let operationDataSetInfosByFlag: any[] = []; 
+      await getOperationDataSetInfosByFlag().then((res: any) => {
+        let data = res.data.data;
+        data.forEach((element: any) => {
+          operationDataSetInfosByFlag.push(element.parameter.Operation);
+        });
+      }).catch((err: any) => {
+        loadingShow.value = false;
+        ElMessage({
+          type: "error",
+          message: err,
+        });
+      });
+      await operationList()
         .then((res: any) => {
           operationOptions.length = 0;
           let arr = res.data.data;
@@ -550,14 +499,10 @@ export default defineComponent({
               label: element.parameter.operation_name,
               value: element.parameter.operation_id,
               last_run_date: element.parameter.last_run_date,
+              isFlagOne: operationDataSetInfosByFlag.indexOf(element.parameter.operation_id) != -1
             };
             operationOptions.push(obj);
           });
-
-          if (operationOptions[0]) {
-            operation.value = operationOptions[0].label;
-          } else {
-          }
         })
         .catch((error: any) => {
           ElMessage({
@@ -575,13 +520,12 @@ export default defineComponent({
     const changType = (val: any) => {
       activeName.value = val;
     };
-    const changeoperation = (val: any) => {};
+    const changeoperation = (val: any) => { };
 
     const movementTable: any = ref(null);
     const getRowKeys = (row: any) => {
       return row.movement;
     };
-    let hostId: any = reactive({});
     let copyLoading: any = ref(false);
     let copyBaseData: any = ref([]);
     const handleCopy = async () => {
@@ -610,6 +554,9 @@ export default defineComponent({
             LIST: [operation.value],
           },
         };
+        if (isGather.value) {
+          activeName.value = '構築';
+        }
         // radio is 収集
         if (activeName.value == "収集結果") {
           for (const [index, elp] of rows.entries()) {
@@ -744,102 +691,212 @@ export default defineComponent({
           isDisabled.value = false;
           emit("changeOperationLoading", false);
         } else {
-          for (const [index, elp] of rows.entries()) {
-            progress.value = index + 1;
-            const optionsArr: Array<unknown> = [];
-            let res = await optionName(params1, elp.value);
-            copyBaseData.value = res.data.data;
-
-            copyBaseData.value.forEach((baseObj: unknown) => {
-              host.forEach(async (itemHost: any) => {
-                let obj1 = JSON.parse(JSON.stringify(baseObj));
-                if (itemHost.host_name == obj1.parameter.host_name) {
-                  obj1.parameter.uuid = "";
-                  obj1.parameter.operation_name_select = selectName;
-
-                  if (obj1.parameter.file) {
-                  } else {
-                    obj1.file = null;
-                  }
-                  optionsArr.push(obj1);
-                }
-              });
-            });
-
-            // There are no reproducible parameters
-            if (optionsArr.length == 0) {
-              ElMessage({
+          let initoperation = operationOptions.find((item: any) => item.label == operation.value);
+          if (initoperation.isFlagOne) {
+            ElMessageBox.confirm(
+              "収集初期値管理用オペレーションを選択しているため、全てのホストに収集初期値管理で設定したパラメータを登録します。",
+              {
+                confirmButtonText: "OK",
+                cancelButtonText: "Cancel",
                 type: "warning",
-                message: "コピー元オペレーションにはコピー可能なパラメータがありません。",
-              });
-            } else {
-              await optionAllRegister(optionsArr, elp.value)
-                .then(async (res: any) => {
-                  let loginOperation = store.getLoginOperation;
-                  let params2 = {
-                    discard: {
-                      NORMAL: "0",
-                    },
-                    operation_name_disp: {
-                      LIST: [loginOperation],
-                    },
-                  };
-                  let count = await getOperationCount(params2, elp.value);
+                customClass: "persdsd",
+                dangerouslyUseHTMLString: true,
+              }
+            ).then(async () => {
+              for (const [index, elp] of rows.entries()) {
+                progress.value = index + 1;
+                const optionsArr: Array<unknown> = [];
+                let res = await optionName(params1, elp.value);
+                copyBaseData.value = res.data.data;
+                copyBaseData.value.forEach((baseObj: unknown) => {
+                  host.forEach(async (itemHost: any) => {
+                    let obj1 = JSON.parse(JSON.stringify(baseObj));
+                    obj1.parameter.uuid = "";
+                    obj1.parameter.operation_name_select = selectName;
+                    obj1.parameter.host_name = itemHost.host_name;
+                    if (obj1.parameter.file) {
+                    } else {
+                      obj1.file = null;
+                    }
+                    optionsArr.push(obj1);
+                  });
+                });
 
-                  elp.num = count.data.data;
-                  if (res.data.data.Register != "0") {
-                    elp.status = "登録済";
-                    ElMessage({
-                      type: "success",
-                      message: `${elp.params}のコピーが成功しました。`,
+                // There are no reproducible parameters
+                if (optionsArr.length == 0) {
+                  ElMessage({
+                    type: "warning",
+                    message: "コピー元オペレーションにはコピー可能なパラメータがありません。",
+                  });
+                } else {
+                  await optionAllRegister(optionsArr, elp.value)
+                    .then(async (res: any) => {
+                      let loginOperation = store.getLoginOperation;
+                      let params2 = {
+                        discard: {
+                          NORMAL: "0",
+                        },
+                        operation_name_disp: {
+                          LIST: [loginOperation],
+                        },
+                      };
+                      let count = await getOperationCount(params2, elp.value);
+
+                      elp.num = count.data.data;
+                      if (res.data.data.Register != "0") {
+                        elp.status = "登録済";
+                        ElMessage({
+                          type: "success",
+                          message: `${elp.params}のコピーが成功しました。`,
+                        });
+                      } else {
+                        elp.num = count.data.data;
+                        elp.status = "未登録";
+                        ElMessage({
+                          type: "warning",
+                          message:
+                            "コピー元オペレーションにはコピー可能なパラメータがありません。",
+                        });
+                      }
+                      emit("changeSecond", movementTableData.value);
+
+                      errorTableData.value[elp.movement] = [{ title: "", content: "" }];
+                      isErrorFlag.value[elp.movement] = false;
+                    })
+                    .catch((err: any) => {
+                      try {
+                        let error = JSON.parse(err);
+                        let arr = [];
+                        for (const key in error) {
+                          let obj: any = {};
+                          obj.serialNum = key;
+                          if (Object.prototype.hasOwnProperty.call(error, key)) {
+                            const element = error[key];
+                            for (const key in element) {
+                              if (Object.prototype.hasOwnProperty.call(element, key)) {
+                                const elementInner = element[key];
+
+                                obj.title = key;
+                                obj.content = elementInner[0];
+                                arr.push(obj);
+                              }
+                            }
+                          }
+                        }
+                        errorTableData.value[elp.movement] = arr;
+                        isErrorFlag.value[elp.movement] = true;
+
+                        // elp.error="err"
+                      } catch (error: any) {
+                        ElMessage({
+                          type: "error",
+                          message: error,
+                        });
+                      }
                     });
-                  } else {
-                    elp.num = count.data.data;
-                    elp.status = "未登録";
-                    ElMessage({
-                      type: "warning",
-                      message:
-                        "コピー元オペレーションにはコピー可能なパラメータがありません。",
-                    });
+                }
+              }
+
+            });
+          }
+          else {
+            for (const [index, elp] of rows.entries()) {
+              progress.value = index + 1;
+              const optionsArr: Array<unknown> = [];
+              let res = await optionName(params1, elp.value);
+              copyBaseData.value = res.data.data;
+              copyBaseData.value.forEach((baseObj: unknown) => {
+                host.forEach(async (itemHost: any) => {
+                  let obj1 = JSON.parse(JSON.stringify(baseObj));
+                  if (itemHost.host_name == obj1.parameter.host_name) {
+                    obj1.parameter.uuid = "";
+                    obj1.parameter.operation_name_select = selectName;
+
+                    if (obj1.parameter.file) {
+                    } else {
+                      obj1.file = null;
+                    }
+                    optionsArr.push(obj1);
                   }
-                  emit("changeSecond", movementTableData.value);
+                });
+              });
 
-                  errorTableData.value[elp.movement] = [{ title: "", content: "" }];
-                  isErrorFlag.value[elp.movement] = false;
-                })
-                .catch((err: any) => {
-                  try {
-                    let error = JSON.parse(err);
-                    let arr = [];
-                    for (const key in error) {
-                      let obj: any = {};
-                      obj.serialNum = key;
-                      if (Object.prototype.hasOwnProperty.call(error, key)) {
-                        const element = error[key];
-                        for (const key in element) {
-                          if (Object.prototype.hasOwnProperty.call(element, key)) {
-                            const elementInner = element[key];
+              // There are no reproducible parameters
+              if (optionsArr.length == 0) {
+                ElMessage({
+                  type: "warning",
+                  message: "コピー元オペレーションにはコピー可能なパラメータがありません。",
+                });
+              } else {
+                await optionAllRegister(optionsArr, elp.value)
+                  .then(async (res: any) => {
+                    let loginOperation = store.getLoginOperation;
+                    let params2 = {
+                      discard: {
+                        NORMAL: "0",
+                      },
+                      operation_name_disp: {
+                        LIST: [loginOperation],
+                      },
+                    };
+                    let count = await getOperationCount(params2, elp.value);
 
-                            obj.title = key;
-                            obj.content = elementInner[0];
-                            arr.push(obj);
+                    elp.num = count.data.data;
+                    if (res.data.data.Register != "0") {
+                      elp.status = "登録済";
+                      ElMessage({
+                        type: "success",
+                        message: `${elp.params}のコピーが成功しました。`,
+                      });
+                    } else {
+                      elp.num = count.data.data;
+                      elp.status = "未登録";
+                      ElMessage({
+                        type: "warning",
+                        message:
+                          "コピー元オペレーションにはコピー可能なパラメータがありません。",
+                      });
+                    }
+                    emit("changeSecond", movementTableData.value);
+
+                    errorTableData.value[elp.movement] = [{ title: "", content: "" }];
+                    isErrorFlag.value[elp.movement] = false;
+                  })
+                  .catch((err: any) => {
+                    try {
+                      let error = JSON.parse(err);
+                      let arr = [];
+                      for (const key in error) {
+                        let obj: any = {};
+                        obj.serialNum = key;
+                        if (Object.prototype.hasOwnProperty.call(error, key)) {
+                          const element = error[key];
+                          for (const key in element) {
+                            if (Object.prototype.hasOwnProperty.call(element, key)) {
+                              const elementInner = element[key];
+
+                              obj.title = key;
+                              obj.content = elementInner[0];
+                              arr.push(obj);
+                            }
                           }
                         }
                       }
-                    }
-                    errorTableData.value[elp.movement] = arr;
-                    isErrorFlag.value[elp.movement] = true;
+                      errorTableData.value[elp.movement] = arr;
+                      isErrorFlag.value[elp.movement] = true;
 
-                    // elp.error="err"
-                  } catch (error: any) {
-                    ElMessage({
-                      type: "error",
-                      message: error,
-                    });
-                  }
-                });
+                      // elp.error="err"
+                    } catch (error: any) {
+                      ElMessage({
+                        type: "error",
+                        message: error,
+                      });
+                    }
+                  });
+              }
             }
           }
+          
           copyLoading.value = false;
           isDisabled.value = false;
           emit("changeOperationLoading", false);
@@ -851,7 +908,6 @@ export default defineComponent({
     const handleDeleteEvent = async () => {
       progress.value = 0;
       let rows = movementTable.value.getSelectionRows();
-
       ElMessageBox.confirm(
         "<p>選択したパラメータシートのパラメータを削除します。</p><p>よろしいですか？</p>",
         "削除",
@@ -944,7 +1000,7 @@ export default defineComponent({
             emit("changeOperationLoading", false);
           }
         })
-        .catch(() => {});
+        .catch(() => { });
     };
     const changestatus = async (val: any) => {
       if (val) {
@@ -974,6 +1030,25 @@ export default defineComponent({
       }
     };
     const changestatusString = (val: any) => {
+    };
+    const checked1 = ref(true);
+    const isGather = ref(true);
+    const isCheckBoxShow = ref(false)
+    const checkBoxChange = (value: boolean) => {
+      if (value) {
+        for (let index = 0; index < operationOptions.length; index++) {
+          const element = operationOptions[index];
+          if (element.isFlagOne) {
+            operation.value = element.label;
+            return;
+          }
+          
+        }
+      } else {
+        if (operationOptions[0]) {
+          operation.value = operationOptions[0].label;
+      }
+      }
     };
 
     return {
@@ -1011,12 +1086,20 @@ export default defineComponent({
       loadingShow,
       isDisabled,
       parametersheet,
+      switchValue,
+      checked1,
+      isGather,
+      isCheckBoxShow,
+      checkBoxChange,
     };
   },
 });
 </script>
 
 <style scoped lang="less">
+/deep/.el-card__body {
+  padding: 15px 20px 4px 20px;
+}
 .progressBox {
   width: calc(100% - 55px);
   text-align: center;
@@ -1024,6 +1107,7 @@ export default defineComponent({
   top: 59%;
   z-index: 2002;
 }
+
 .progressBoxAll {
   width: 100%;
   text-align: center;
@@ -1198,7 +1282,7 @@ export default defineComponent({
   opacity: 0.8;
 }
 
-/deep/.el-table__body tr.current-row > td.el-table__cell {
+/deep/.el-table__body tr.current-row>td.el-table__cell {
   color: #0960bd;
   background-color: #fff;
 }
@@ -1211,15 +1295,34 @@ export default defineComponent({
 .finished {
   color: #0960bd;
 }
+
+.slide-enter-active,
+.slide-leave-active {
+  transition: opacity 0.3s;
+}
+
+.slide-enter-from,
+.slide-leave-to {
+  opacity: 0;
+}
 </style>
 <style lang="less">
 .el-message-box {
   max-width: 440px !important;
 }
+
 .errorTable {
   .el-table .cell {
     height: auto !important;
     line-height: 26px !important;
   }
+}
+
+.el-switch__label {
+  color: #0960bd;
+}
+
+.el-switch__label.is-active {
+  color: #A8ABB2;
 }
 </style>
