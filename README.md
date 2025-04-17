@@ -14,7 +14,7 @@ SimpleModeを、Exastro Playbook Collectionと組合せて利用するための�
 前提として、Exastro IT AutomationとExastro IT Automation SimpleModeをインストールするサーバーを用意してください。（同一サーバーへのインストールでも可）
 
 ### 1. Exastro IT Automation Ver.2.2.1 の構築
-SimpleMode Ver.1.2は、Exastro IT Automation Ver.2.2.1にのみ対応しています。他のバージョンでの動作は検証していません。
+SimpleModeは、Exastro IT Automation Ver.2.2.1にのみ対応しています。他のバージョンでの動作は検証していません。
 以下の手順で、Exastro IT Automation Ver.2.2.1をインストールします。
 
 1. Exastro IT Automation Ver.2.2.1のソースをダウンロードします。
