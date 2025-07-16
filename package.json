@@ -20,7 +20,8 @@
     "pinia": "2.0.36",
     "sass": "1.63.2",
     "vue": "3.2.47",
-    "vue-router": "4.2.2"
+    "vue-router": "4.2.2",
+    "exceljs":"4.4.0"
   },
   "devDependencies": {
     "@types/node": "20.4.1",

@@ -370,3 +370,23 @@ export function getDefOperationInfos(data: any) {
     data,
   });
 }
+
+/**
+ * メニューグループ管理にメニューグループに紐付くメニューを取得
+ * @param data メニューグループ情報
+ */
+export function getMenuGroupList(data:any) {
+  const orgId = localStorage.getItem("organization");
+  const workspaceId = localStorage.getItem("workspace");
+  return service({
+    url:
+      Api.Api +
+      orgId +
+      "/workspaces/" +
+      workspaceId +
+      "/ita/menu" +
+      "/menu_group_list/filter/",
+    method: "POST",
+    data,
+  });
+}

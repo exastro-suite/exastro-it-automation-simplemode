@@ -235,8 +235,7 @@ export default defineComponent({
           let timer2 = setInterval(() => {
             if (loadingFlag1.value == false) {
               clearInterval(timer2);
-
-              jspreadsheetObj.setData(JSON.stringify(data.value));
+              jspreadsheetObj.setData(JSON.stringify(jspreadsheetsort(data.value)));
               jspreadsheetObj.refresh();
               loadingDialog.value = false;
             }
@@ -244,6 +243,28 @@ export default defineComponent({
         }
       }, 1000);
     };
+
+    // ソート処理
+    const jspreadsheetsort = (data: any) => {
+      data.sort((a: any, b: any) => {
+        if (a['parameter.input_order'] != undefined &&
+          b['parameter.input_order'] != undefined && a['parameter.input_order'] != b['parameter.input_order']) {
+          return Number(a['parameter.input_order']) - Number(b['parameter.input_order']);
+        }
+        if (a['parameter.host_name'] != undefined &&
+          b['parameter.host_name'] != undefined
+          && a['parameter.host_name'] < b['parameter.host_name']) {
+          return -1
+        }
+        if (a['parameter.host_name'] != undefined &&
+          b['parameter.host_name'] != undefined
+          && a['parameter.host_name'] > b['parameter.host_name']) {
+          return 1
+        }
+        return 0;
+      });
+      return data;
+    }
 
     const createSheet = async () => {
       //インスタンス化
@@ -628,7 +649,7 @@ export default defineComponent({
 </script>
 <style lang="less" scoped>
 .readOnlyBoxSheet {
-  --el-dialog-width: 100% !important;
+  --el-dialog-width: 98% !important;
   --el-dialog-margin-top: 18vh;
 }
 

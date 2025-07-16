@@ -410,7 +410,7 @@ export default defineComponent({
               let result: any = relationshipsDataArray.value.find(
                   (item: any) => item.parameter.movement == movementName.value
               );
-              if (result) {
+              if (result && result.parameter.source_parameter) {
                 let objData = {
                   discard: { NORMAL: 0 },
                   menu_name_ja: {

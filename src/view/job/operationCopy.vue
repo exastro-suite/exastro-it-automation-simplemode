@@ -569,6 +569,9 @@ export default defineComponent({
               (item: any) => item.parameter.movement == elp.movement
             );
             if (result) {
+              if (!result.parameter.source_parameter) {
+                continue;
+              } 
               let objData = {
                 discard: { NORMAL: 0 },
 
@@ -1050,7 +1053,14 @@ export default defineComponent({
       }
       }
     };
-
+    const findIndexInArrayForMovement_gather = (property: any, B: any) => {
+      for (let i = 0; i < B.length; i++) {
+        if (B[i].parameter.movement_gather === property) {
+          return B[i];
+        }
+      }
+      return -1;
+    };
     return {
       tableHeight,
       changestatus,

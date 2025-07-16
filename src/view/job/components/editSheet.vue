@@ -207,8 +207,32 @@ export default defineComponent({
       // upade readOnly
       let jsheetData = jspreadsheetObj.getJson();
 
-      jspreadsheetObj.setData(jsheetData);
+      jspreadsheetObj.setData(jspreadsheetsort(jsheetData));
+      ;
     };
+
+    // ソート処理
+    const jspreadsheetsort = (data: any) => {
+      data.sort((a: any, b: any) => {
+        if (a['parameter.input_order'] != undefined &&
+          b['parameter.input_order'] != undefined && a['parameter.input_order'] != b['parameter.input_order']) {
+          return Number(a['parameter.input_order']) - Number(b['parameter.input_order']);
+        }
+        if (a['parameter.host_name'] != undefined &&
+          b['parameter.host_name'] != undefined
+          && a['parameter.host_name'] < b['parameter.host_name']) {
+          return -1
+        }
+        if (a['parameter.host_name'] != undefined &&
+          b['parameter.host_name'] != undefined
+          && a['parameter.host_name'] > b['parameter.host_name']) {
+          return 1
+        }
+        return 0;
+      });
+      return data;
+    }
+
     // eslint-disable-next-line no-unused-vars
     const onCopy = (instance: any, data: any) => {
       copySize.value = data.length;
@@ -577,7 +601,7 @@ export default defineComponent({
         jsheetData[selectionUploadCoordinate.selectionY][
           "parameter.fileBase"
         ] = base64String;
-        jspreadsheetObj.setData(jsheetData);
+        jspreadsheetObj.setData(jspreadsheetsort(jsheetData));
       };
       reader.readAsBinaryString(file.raw);
     };
@@ -663,11 +687,11 @@ export default defineComponent({
           }
 
           if (spreadsheetEdit.value) {
-            jspreadsheetObj.setData(JSON.stringify(dataObj));
+            jspreadsheetObj.setData(JSON.stringify(jspreadsheetsort(dataObj)));
           }
           loadingFlag1.value = false;
           try {
-            jspreadsheetObj.setData(JSON.stringify(dataObj));
+            jspreadsheetObj.setData(JSON.stringify(jspreadsheetsort(dataObj)));
             jspreadsheetObj.refresh();
           } catch (error: any) {
           }

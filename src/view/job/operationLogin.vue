@@ -5,70 +5,41 @@
       <div class="tabBox">
         <el-radio-group v-model="activeName" class="ml-4">
           <el-radio border label="1" size="large">オペレーションを新規登録する</el-radio>
-          <el-radio border label="2" size="large"
-            >中断したオペレーションを再開する</el-radio
-          >
+          <el-radio border label="2" size="large">中断したオペレーションを再開する</el-radio>
         </el-radio-group>
       </div>
       <div v-if="activeName == '1'" class="newBox">
-        <div class="dataListInputBox">
-          <span class="inputLable">オペレーション名</span>
-          <input
-            id="dataListInput"
-            type="text"
-            :readonly="successOperation ? isDisabled : false"
-            v-model="login"
-            list="dataList"
-            placeholder="オペレーション名を選択または入力"
-            style="width: 378px; display: inline"
-            name="dataListname"
-          />
-          <datalist id="dataList">
-            <option v-for="item in optionsNames" :key="item.value">
+        <span class="inputLable">オペレーション名</span>
+        <el-dropdown trigger="click" @command="dropdownCommand" style="min-width: 200px;" placement="bottom-start">
+          <el-input v-model="login" style="width: 400px" placeholder="オペレーション名を選択または入力"
+            :readonly="successOperation ? isDisabled : false"/>
+          <template #dropdown>
+            <el-dropdown-menu style="--el-dropdown-menuItem-hover-fill: var(--el-fill-color-light);--el-dropdown-menuItem-hover-color: var(--el-text-color-regular);">
+               <el-dropdown-item v-for="item in filteredOptions" :key="item.value" :command="item.value">
               {{ item.label }}
-            </option>
-          </datalist>
-        </div>
-        <span class="inputLable">予定実行日時（現在時刻が自動的に設定されます） </span
-        ><el-input v-model="dataTime" style="width: 400px" placeholder="" disabled />
+            </el-dropdown-item>
+            <el-dropdown-item v-if="filteredOptions.length === 0" v-for="item in optionsNames" :key="item.value" :command="item.value">
+              {{ item.label }}
+        </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
+        <span class="inputLable">予定実行日時（現在時刻が自動的に設定されます） </span><el-input v-model="dataTime" style="width: 400px"
+          placeholder="" disabled />
       </div>
       <div v-else class="oldBox">
-        <el-input
-          v-model="keyWords"
-          style="width: 400px"
-          placeholder="オペレーション名を入力"
-          class="searchIpt"
-        >
+        <el-input v-model="keyWords" style="width: 400px" placeholder="オペレーション名を入力" class="searchIpt">
           <template #append><el-button @click="search">フィルタ</el-button></template>
         </el-input>
-        <el-table
-          :data="operations"
-          v-loading="loadingShow"
-          element-loading-text="loading..."
-          scrollbar-always-on
-          @current-change="rowClick"
-          border
-          :height="tableHeight"
-          highlight-current-row
-          :row-height="27"
-        >
+        <el-table :data="operations" v-loading="loadingShow" element-loading-text="loading..." scrollbar-always-on
+          @current-change="rowClick" border :height="tableHeight" highlight-current-row :row-height="27">
           <el-table-column label="" width="55" align="center">
             <template #default="scope">
-              <el-radio
-                class="radio"
-                :label="scope.row.operation_name"
-                v-model="currentRow"
-                >&nbsp;</el-radio
-              >
+              <el-radio class="radio" :label="scope.row.operation_name" v-model="currentRow">&nbsp;</el-radio>
             </template>
           </el-table-column>
-          <el-table-column
-            v-for="(item, index) in columns"
-            :label="item.title"
-            :prop="item.dataIndex"
-            :key="index"
-          ></el-table-column
-        ></el-table>
+          <el-table-column v-for="(item, index) in columns" :label="item.title" :prop="item.dataIndex"
+            :key="index"></el-table-column></el-table>
       </div>
     </div>
   </div>
@@ -81,6 +52,7 @@ import {
   ref,
   watch,
   onMounted,
+  computed
 } from "vue";
 import { getradiosInfo, getOperationDataSetInfosByFlag} from "../../api/jobApi";
 import { operationList } from "../../api/jobList";
@@ -148,6 +120,7 @@ export default defineComponent({
       getNowTime();
       getradiosInfo().then((res: any) => {
         let data = res.data.data;
+        data.sort((a:any,b:any)=> b.parameter.conductor_name.localeCompare(a.parameter.conductor_name));
         data.forEach((element: any) => {
           let obj: any = {
             value: element.parameter.conductor_name + "_" + loginTime.value,
@@ -283,6 +256,15 @@ export default defineComponent({
       );
     };
 
+    const dropdownCommand = (command: any) => {
+      login.value = command
+    };
+    const filteredOptions = computed(() => {
+      if (!login.value) return optionsNames
+      return optionsNames.filter((item: any) =>
+        item.label.includes(login.value)
+      )
+    })
     return {
       currentRow,
       activeName,
@@ -302,6 +284,8 @@ export default defineComponent({
       getCurVal,
       isDisabled,
       DocumentCopy,
+      dropdownCommand,
+      filteredOptions,
     };
   },
 });

@@ -133,13 +133,12 @@ const columns = [
   {
     title: "オペレーション名",
     dataIndex: "operation_name",
-    width: 290,
   },
 
   {
-    title: "ステータスID",
+    title: "ステータス",
     dataIndex: "status_id",
-    width: 140,
+    width: 60,
   },
   {
     title: "Conductor名称",
@@ -148,6 +147,7 @@ const columns = [
   {
     title: "作業実行ユーザー",
     dataIndex: "execution_user",
+    width: 170,
   },
   {
     title: "Action",
