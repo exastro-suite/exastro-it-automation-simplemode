@@ -228,14 +228,14 @@ export default defineComponent({
         let parameter_uuids: any[] = [];
         if (resdata_old.length != 0) {
          let resdata = resdata_old.sort(function (a: any, b: any) {
-            if (a.parameter.menu_name_rest < b.parameter.menu_name_rest) {
-              return -1;
-            }
-            if (a.parameter.menu_name_rest > b.parameter.menu_name_rest) {
-              return 1;
-            }
-            return 0;
-          });
+           if (a.parameter.display_order < b.parameter.display_order) {
+             return -1;
+           }
+           if (a.parameter.display_order > b.parameter.display_order) {
+             return 1;
+           }
+           return 0;
+         });
           let data = {
             discard: {
               NORMAL: "0",
@@ -399,14 +399,14 @@ export default defineComponent({
         let resdata_old = res.data.data;
         if (resdata_old.length != 0) {
          let resdata = resdata_old.sort(function (a: any, b: any) {
-            if (a.parameter.menu_name_rest < b.parameter.menu_name_rest) {
-              return -1;
-            }
-            if (a.parameter.menu_name_rest > b.parameter.menu_name_rest) {
-              return 1;
-            }
-            return 0;
-          });
+           if (a.parameter.display_order < b.parameter.display_order) {
+             return -1;
+           }
+           if (a.parameter.display_order > b.parameter.display_order) {
+             return 1;
+           }
+           return 0;
+         });
 
           let data = {
             discard: {

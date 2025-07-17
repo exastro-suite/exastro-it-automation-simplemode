@@ -1,369 +1,194 @@
 <template>
-  <div class="header-box" v-show="isOperation">
-    <el-input v-model="keyWords" style="width: 460px" placeholder="検索" class="searchBtn">
-      <template #append><el-button @click="search">フィルタ</el-button></template>
-    </el-input>
-    <div class="button-action"><el-button type="primary" class="refresh_btn" @click="handleRefresh"><el-icon
-          size="16px">
-          <Refresh />
-        </el-icon>&nbsp;
-        <span style="display: inline-block; margin-top: 2px">更新</span></el-button></div>
+  <el-steps :active="active" align-center finish-status="success">
+    <el-step title="参照対象種別選択">
+      <template #description>
+        <span v-show="active >= 1">
+          <span class="desBracket">(</span>
+          <span class="desText">{{ selectedTypeName }}</span>
+          <span class="desBracket">)</span>
+        </span>
+      </template>
+    </el-step>
+    <el-step title="パラメータシート選択" />
+    <el-step title="パラメータシート参照" />
+  </el-steps>
+  <div class="contentCenterBox">
+    <keep-alive>
+      <parameterSheetTypeSelect v-if="active==0" @setSelectType = "setSelectType">
+    </parameterSheetTypeSelect>
+    </keep-alive>
+    <KeepAlive>
+      <parameterSheetSelectView v-if="active==1" :selectType = "selType" :selectedMenuGroupType = "menu_group_type" :prev="isPrev" @selectedParamterInfos="setSelParamterInfos">
+      </parameterSheetSelectView>
+    </KeepAlive>
+    <KeepAlive>
+      <parameterSheetDetailView v-if="active==2" :selParamters="selParamInfos" :prev="isPrev2" @buttonDisabled="setButtondisabled">
+      </parameterSheetDetailView>
+    </KeepAlive>
   </div>
-  <el-table v-show="isOperation" v-loading="loadingShow" element-loading-text="loading..." :data="operations" border
-    height="648" style="width: 100%" @sort-change="sortMethod">
-    <template v-for="(item, index) in columns" :key="index">
-      <el-table-column v-if="item.dataIndex == 'action'" label="" :width="96">
-        <template #default="scope">
-          <el-button class="detailsBtn" style="margin-right: 16px" @click="detailClick(scope.row)">
-            <el-icon>
-              <Search />
-            </el-icon>&nbsp;詳細</el-button>
-        </template>
-      </el-table-column>
-      <el-table-column v-else :label="item.title" :prop="item.dataIndex" :width="item.width"></el-table-column>
-    </template>
-  </el-table>
-  <div v-show="!isOperation">
-    <Detail :operationName="operationName" @changeIsOperation="changeIsOperation" :isOperation="isOperation"></Detail>
+  <div class="steps-action">
+    <div>
+      <el-button :disabled = "prevDsabled" class="backBtn" v-if="active == 1 || active == 2" @click="prev">もどる</el-button>
+      <el-button :disabled = "nextDsabled" class="nextBtn" v-if="active == 0 || active == 1" @click="next">つぎへ</el-button>
+      <el-tooltip class="item" effect="light" content="選択した全部パラメータシートを階層型フォーマットのExcelに出力します" placement="top">
+      <el-button :disabled = "nextDsabled" class="nextBtn" v-if="active == 2" @click="downloadAllSysFile">階層型Excel出力実行</el-button>
+      </el-tooltip>
+    </div>
   </div>
 </template>
-
 <script lang="ts">
-import { defineComponent, reactive, ref } from "vue";
-import { operationListForFlag,getDefOperationDataSetInfos } from "../../api/jobList";
-import { ElMessage, ElTable } from "element-plus";
-import { Search,Refresh, } from "@element-plus/icons-vue";
-import { debounce } from "../../utils/debounce";
-import { useRouter, useRoute } from "vue-router";
-import Detail from "./detail.vue";
+import {
+  ElSteps,
+  ElStep,
+  ElMessage,
+} from "element-plus";
+import { defineComponent, reactive, ref, watch } from "vue";
+import parameterSheetTypeSelect from "./parameterSheetTypeSelect.vue";
+import parameterSheetSelectView from "./parameterSheetSelect.vue";
+import parameterSheetDetailView from "./detail.vue";
+import { eventBus } from "../../store/eventBus";
 
-type dataType = {
-  operation_id: string;
-  operation_name: string;
-  remarks: string;
-  scheduled_date_for_execution: string;
-  last_run_date: string;
-  last_update_date_time: string;
-  last_updated_user: string;
-};
 export default defineComponent({
-  name: "Parameter",
-  components: {
-    Search,
-    Detail,
-    Refresh,
-  },
+  name: "index",
+  components: {ElSteps,ElStep,parameterSheetTypeSelect,parameterSheetSelectView,parameterSheetDetailView},
   setup() {
-    let isOperation = ref(true);
-    let loadingShow = ref(true);
-    let operations: Array<dataType> = reactive([]);
-    let operationsCopy: Array<dataType> = reactive([]);
-    const dialogVisible = ref(false);
-    const operationName: any = ref("");
-    let radios: any = reactive([]);
+    const active: any = ref(0);
+    const selType: any = ref('');
+    const selectedTypeName: any = ref('');
+    const selParamInfos: any = ref();
+    const prevDsabled = ref(false);
+    const nextDsabled = ref(false);
+    const isPrev = ref(false);
+    const isPrev2 = ref(false);
+    // event bus
+    const bus = eventBus();
 
-    // conductor
-    const conductor = ref<string>("");
-
-    const columns = reactive([
-      {
-        title: "",
-        dataIndex: "action",
-      },
-      {
-        title: "オペレーション名",
-        dataIndex: "operation_name",
-      },
-      {
-        title: "実施予定日時",
-        dataIndex: "scheduled_date_for_execution",
-        width: 180,
-      },
-      {
-        title: "最終実行日時",
-        dataIndex: "last_run_date",
-        width: 180,
-      },
-      {
-        title: "備考",
-        dataIndex: "remarks",
-      },
-    ]);
-
-    async function getRadios() {
-      loadingShow.value = true;
-      let data = {
-        discard: {
-          NORMAL: "0",
-        },
-        "Flag": {
-          LIST: [null]
-        }
-      };
-      let defOperationIds: any[] = [];
-      await getDefOperationDataSetInfos(data).then(async (res: any) => {
-        let data = res.data.data;
-        if (data.length != 0) {
-          data.forEach((element: any) => {
-            defOperationIds.push(element.parameter.Operation);
-          });
-        }
-      }).catch((err: any) => {
-        ElMessage({
-          type: "error",
-          message: err,
-        });
-      });
-      await operationListForFlag(defOperationIds)
-        .then((res: any) => {
-          let data: any = res.data.data;
-          let arr1: any = data.sort((a: any, b: any) => {
-            return (
-              Number(b.parameter.last_run_date !== null) -
-                Number(a.parameter.last_run_date !== null) ||
-              new Date(b.parameter.last_run_date).valueOf() -
-                new Date(a.parameter.last_run_date).valueOf()
-            );
-          });
-
-          arr1.forEach((element: any) => {
-            element.parameter.last_update_date_time = element.parameter.last_update_date_time.substring(
-              0,
-              element.parameter.last_update_date_time.length - 7
-            );
-            
-            operations.push(element.parameter);
-            operationsCopy.push(element.parameter);
-          });
-          loadingShow.value = false;
-        })
-        .catch((err: any) => {
-          loadingShow.value = false;
+    const next = () => {
+      if (active.value == 0) {
+        if (selType.value == '') {
+          let message = "パラメータシート所属のメニューグループを選択してください。";
+          if (menu_group_type.value != "1") {
+            message = "パラメータシート所属のConductorを選択してください。";
+          }
           ElMessage({
-            type: "error",
-            message: err,
+            type: "warning",
+            message: message,
           });
-        });
-    }
-    getRadios();
-    const sortMethod = () => {};
-    const detailClick = debounce((row: any) => {
-      conductor.value = "";
-      operationName.value = row.operation_name;
-
-      isOperation.value = false;
-    }, 500);
-
-    const changeIsOperation = (val: any) => {
-      isOperation.value = val;
-    };
-    const keyWords = ref<string>("");
-    const search = () => {
-      if (keyWords.value) {
-        operations.length = 0;
-        let result = operationsCopy.filter((item: any) => {
-          return item.operation_name.indexOf(keyWords.value) != -1;
-        });
-
-        result.forEach((element) => {
-          operations.push(element);
-        });
-      } else {
-        operations.length = 0;
-        operationsCopy.length = 0;
-        getRadios();
+          return;
+        }
+        isPrev.value = !isPrev.value
       }
+      if (active.value == 1) {
+        if (!selParamInfos.value || selParamInfos.value.length === 0) {
+          ElMessage({
+            type: "warning",
+            message: "パラメータシートを選択してください。",
+          });
+          return;
+        }
+        isPrev2.value = !isPrev2.value
+      }
+      active.value++;
+    }
+    const prev = () => {
+      active.value--;
     };
-    const handleClose = () => {
-      dialogVisible.value = false;
-    };
-    const handleRefresh =  debounce(() => {
-      loadingShow.value = true;
-      operations.length = 0;
-      operationsCopy.length = 0;
-      getRadios();
-      keyWords.value = "";
-    }, 500);
-    return {
-      operations,
-      keyWords,
-      columns,
-      sortMethod,
-      loadingShow,
-      detailClick,
-      search,
+    const downloadAllSysFile = () => {
+      bus.emit("downloadSysFile", true);
+    }
 
-      handleClose,
-
-      radios,
-      operationName,
-      conductor,
-      isOperation,
-      changeIsOperation,
-      handleRefresh,
+    const setSelParamterInfos = (seledParamInfos: any) => {
+      selParamInfos.value = seledParamInfos;
     };
-  },
+    const setSelectType = (typeName: any, typeId: any, menu_type: any) => {
+      menu_group_type.value = menu_type;
+      selectedTypeName.value = typeName;
+      selType.value = typeId;
+    }
+    const menu_group_type: any = ref("");
+
+    const setButtondisabled = (isDisabled: any) => {
+      nextDsabled.value = isDisabled;
+      prevDsabled.value = isDisabled;
+    }
+    return { setButtondisabled,downloadAllSysFile,active,selType,prevDsabled,nextDsabled,next, prev,setSelParamterInfos,setSelectType,selectedTypeName,menu_group_type,isPrev,isPrev2,selParamInfos};
+  }
 });
 </script>
-
 <style scoped lang="less">
-.radiosBox {
-  margin-top: 15px;
-  width: 100%;
-  max-height: 420px;
-  justify-content: space-around;
+.contentCenterBox {
+  height: calc(100% - 200px);
   overflow-y: scroll;
 }
-.el-radio-group {
-  /deep/.el-radio.is-bordered.is-checked {
-    background-color: #0960bd;
-    color: #fff;
-  }
-
-  /deep/.el-radio__label {
-    width: 148px;
-    text-align: left;
-    display: inline-block;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  /deep/.el-radio__input.is-checked + .el-radio__label {
-    color: #fff;
-  }
-
-  .el-radio {
-    font-size: 16px;
-    margin-bottom: 10px;
-    height: 44.8px;
-  }
-
-  .el-radio:hover {
-    background-color: #f5f7fa;
-  }
+.desBracket {
+  display: inline-block;
+  width: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-.searchBtn {
-  /deep/ button {
-    color: #fff;
-    border-color: #da6a38;
-    background-color: #da6a38;
-    border-radius: 0;
-
-    &:hover {
-      color: #fff;
-      border-color: #da6a38;
-      background-color: #da6a38;
-      border-radius: 0;
-      opacity: 0.8;
-    }
-  }
+.desText {
+  display: inline-block;
+  max-width: 84%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-</style>
-<style lang="less">
-.selectConductor {
-  .el-dialog__body {
-    padding: 0 20px 20px 20px !important;
-    overflow-x: hidden !important;
-  }
+/deep/.el-step__title.is-success {
+  color: #ff5722 !important;
 }
-.el-radio.is-bordered.is-checked {
-  border-color: #0960bd;
-  color: #0960bd;
+/deep/.el-step__head.is-success {
+  color: #ff5722 !important;
+  border-color: #ff5722 !important;
 }
-
-.el-radio__input.is-checked + .el-radio__label {
-  color: #0960bd;
+.el-step.is-center .el-step__description {
+  padding-left: 0%;
+  padding-right: 0%;
 }
-
-.el-radio__input.is-checked .el-radio__inner {
-  border-color: #0960bd;
-  background-color: #fff;
+.el-step.is-horizontal {
+  width: 50% !important;
+  flex-basis: auto !important;
 }
-
-.el-radio__input.is-checked .el-radio__inner::after {
-  border: 1px solid #0960bd;
-  width: 6px;
-  height: 6px;
-}
-.el-table tbody tr .el-table__cell {
-  padding: 0px 0 !important;
-}
-.el-table .el-table__cell {
-  padding: 0px 0 !important;
-}
-.el-table .cell {
-  line-height: 26px !important;
-}
-.detailsBtn {
-  border-color: #418d45;
-  background-color: #418d45;
-  color: #fff;
-  padding: 2px 10px !important;
-  height: auto;
-  &:hover {
-    background-color: #418d45 !important;
-    border-color: #418d45 !important;
-    color: #fff;
-  }
-
-  &:active,
-  &:focus {
-    background-color: #418d45 !important;
-    border-color: #418d45 !important;
-    color: #fff;
-  }
-}
-.header-box {
+.steps-action {
+  box-sizing: border-box;
+  overflow: hidden;
   display: flex;
-  justify-content: space-between;
-  margin-top: 10px;
-  margin-bottom: 10px;
-}
-.selectConductor {
-  .el-button--primary {
-    background-color: #0960bd;
-    color: #fff;
-    border-color: #0960bd;
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  justify-content: end;
+  width: 100%;
+  margin-top: 24px;
+  margin-left: -10px;
+  padding: 10px 0;
+  background-color: #002060;
+  z-index: 99;
+  .cancelButton {
+    margin-left: 20px;
   }
 
-  .el-button:nth-child(2) {
+  .backBtn {
+    padding: 0 20px;
+    border-radius: 8px;
+    background-color: #fff0f000;
+    color: #fff;
+    margin-right: 10px;
+
     &:hover {
       opacity: 0.8;
     }
+  }
 
-    &:hover,
-    &:active,
-    &:focus {
-      background-color: #0960bd !important;
-      color: #fff;
-      border-color: #0960bd;
+  .nextBtn {
+    margin-right: 20px;
+    padding: 0 50px;
+    border-radius: 8px;
+    color: #fff;
+    background-color: #da6a38;
+
+    &:hover {
+      opacity: 0.8;
     }
   }
-  .el-button + .el-button {
-    margin-left: 12px !important;
-  }
-}
-.button-action {
-  .el-button--primary {
-    background-color: #0960bd;
-    color: #fff;
-    border-color: #0960bd;
-  }
-  .el-button:hover,
-  .el-button:active,
-  .el-button:focus {
-    background-color: #0960bd !important;
-    color: #fff;
-    border-color: #0960bd;
-  }
-  .el-button:hover {
-    opacity: 0.8;
-  }
-  .el-button + .el-button {
-    margin-left: 0 !important;
-  }
-}
-.el-button + .el-button {
-  margin-left: 10px;
 }
 </style>

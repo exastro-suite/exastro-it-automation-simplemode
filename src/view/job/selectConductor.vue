@@ -16,6 +16,7 @@
               :label="item.value"
               :key="item.value"
               border
+              style="width: 450px;"
             >
               {{ item.label }}
             </el-radio></el-tooltip
@@ -233,6 +234,7 @@ export default defineComponent({
     function getRadios() {
       getradiosInfo().then((res: any) => {
         let data = res.data.data;
+        data.sort((a:any,b:any)=> b.parameter.conductor_name.localeCompare(a.parameter.conductor_name));
         data.forEach((element: any) => {
           let obj: Radio = {
             value: element.parameter.conductor_class_id,
@@ -388,7 +390,7 @@ export default defineComponent({
   z-index: 2002;
 }
 .cardBoxL {
-  width: 260px;
+  width: 500px;
   max-height: 470px;
   /deep/.el-card__body {
     height: 90%;
@@ -413,7 +415,7 @@ export default defineComponent({
   }
 
   /deep/.el-radio__label {
-    width: 148px;
+    // width: 148px;
     text-align: left;
     display: inline-block;
     overflow: hidden;
