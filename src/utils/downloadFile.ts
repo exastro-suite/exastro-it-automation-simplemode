@@ -79,7 +79,7 @@ let greator: any = null;
 let versionNum: any = null;
 
 // 選択したパラメータシートを標準フォーマットで一つExcelに出力
-export const assembleData4Gp = async(columnHeaders: any, columnDatas: any, workbook: ExcelJS.Workbook, inputOrderInfos: any,parameterSheetInfos:any,file_rows:any,operationName:string,catalogue:any) => {
+export const assembleData4Gp = async(columnHeaders: any, columnDatas: any, workbook: ExcelJS.Workbook, inputOrderInfos: any,parameterSheetInfos:any,file_rows:any,operationName:string,catalogue:any,has_col:boolean) => {
   for (let index = 0; index < inputOrderInfos.length; index++) {
     isFri = true;
     const element = inputOrderInfos[index];
@@ -231,7 +231,7 @@ export const assembleData4Gp = async(columnHeaders: any, columnDatas: any, workb
             let groupinfo = info['g1']
             let columnsName = info["columnsName"]
             let main_group_name = info['main_group_name']
-            rowIndex = processColumnHeader(info, targetWorksheet, groupinfo, rowIndex, colIndex, columnsName, file_row, inster_col_count,main_group_name);
+            rowIndex = processColumnHeader(info, targetWorksheet, groupinfo, rowIndex, colIndex, columnsName, file_row, inster_col_count,main_group_name,has_col);
         });
       }
 
@@ -379,9 +379,10 @@ export const assembleData4Gp = async(columnHeaders: any, columnDatas: any, workb
   return workbook;
 }
 let isFri = true;
-const processColumnHeader = (info: any, targetWorksheet: ExcelJS.Worksheet, groupinfo: any, rowIndex: number, colIndex: number,columnsName:any,file_row:any,inster_col_count:number,main_group_name:any) => {
+const processColumnHeader = (info: any, targetWorksheet: ExcelJS.Worksheet, groupinfo: any, rowIndex: number, colIndex: number,columnsName:any,file_row:any,inster_col_count:number,main_group_name:any,has_col:boolean) => {
   let columns = groupinfo["columns"];
   main_group_name;
+  let has_file = false;
   for (let index = 0; index < columns.length; index++) {
     const element = columns[index];
     if (element.match(matchingG)) {
@@ -391,6 +392,9 @@ const processColumnHeader = (info: any, targetWorksheet: ExcelJS.Worksheet, grou
       nowcell.alignment = { vertical:'top' };
       if (isFri) {
         isFri = false;
+        nowcell.value = name;
+      }
+      if (has_col) {
         nowcell.value = name;
       }
       if (!main_group_name.includes(name)) {
@@ -421,7 +425,7 @@ const processColumnHeader = (info: any, targetWorksheet: ExcelJS.Worksheet, grou
             right: { style: 'thin' },
           }
       }
-      rowIndex = processColumnHeader(info, targetWorksheet, groupinfo_sub, rowIndex, colIndex + 2, columnsName, file_row, inster_col_count,main_group_name);
+      rowIndex = processColumnHeader(info, targetWorksheet, groupinfo_sub, rowIndex, colIndex + 2, columnsName, file_row, inster_col_count,main_group_name,has_col);
       nowcell = targetWorksheet.getCell(rowIndex - 1, colIndex);
       nowcell.alignment = { vertical:'top' };
       nowcell.border = {
@@ -437,13 +441,15 @@ const processColumnHeader = (info: any, targetWorksheet: ExcelJS.Worksheet, grou
     } else {
       let file_str  = columnsName[element]
       targetWorksheet.getCell(rowIndex, colIndex).value = columnsName[element];
-      targetWorksheet.getCell(rowIndex, colIndex).alignment = {vertical:'top' };
-      if (file_str == "file") {
-        let count = file_row[file_inx];
+      targetWorksheet.getCell(rowIndex, colIndex).alignment = { vertical: 'top' };
+      console.log(file_str)
+      if (file_row.length != 0 && file_row[file_inx].hasOwnProperty(file_str)) {
+        let file_row_var = file_row[file_inx];
+        let count = file_row_var[file_str];
         for (let index_count = 1; index_count < count; index_count++) {
           rowIndex ++;
         }
-        file_inx++;
+        has_file = true;
       }
       for (let index_border = colIndex; index_border <= inster_col_count + 1; index_border++) {
         let cell_d = targetWorksheet.getCell(rowIndex, index_border);
@@ -462,6 +468,9 @@ const processColumnHeader = (info: any, targetWorksheet: ExcelJS.Worksheet, grou
       }
       rowIndex ++;
     }
+  }
+  if (has_file) {
+    file_inx++;
   }
   return  rowIndex;
 }

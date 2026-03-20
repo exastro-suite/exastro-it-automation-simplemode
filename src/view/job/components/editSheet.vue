@@ -1,8 +1,8 @@
 <template>
   <div v-if="visible" class="editBoxSheet" v-loading="loadingDialog">
-    <div  ref="spreadsheetEdit" style="min-height: 500px; min-width: 100%;"></div>
+    <div ref="spreadsheetEdit" style="min-height: 441px; min-width: 100%;"></div>
   </div>
-  <div v-else v-loading="true" style="height: 500px"></div>
+  <div v-else v-loading="true" style="height: 441px"></div>
   <el-upload ref="uploadRef" class="upload-demo" action="#" :auto-upload="false" :on-change="convertFileToBase64"
     v-show="false">
     <template #trigger>
@@ -38,7 +38,7 @@ import { eventBus } from "../../../store/eventBus";
 export default defineComponent({
   name: "editSheet",
   props: ["dialogVisibleEdit", "editOperation", "editParams", "movementName"],
-  emits: ["changeEdit","setButtonStatus","editSheetchangestatus"],
+  emits: ["changeEdit", "setButtonStatus", "editSheetchangestatus"],
   components: {
     ElDialog,
   },
@@ -79,6 +79,8 @@ export default defineComponent({
     let errorFlag: any = ref(false);
     let sheetWidth: any = ref("");
     let headertoolMapping: any = reactive({});
+    let crr_pagination_var: any = 25;
+    let old_optionsArr: any = [];
     onMounted(() => {
       sheetWidth.value = window.innerWidth * 0.868 + "px";
 
@@ -88,7 +90,7 @@ export default defineComponent({
         container[0].style.width = sheetWidth.value;
       }
       window.onresize = () => {
-        sheetWidth.value = window.innerWidth * 0.868+ "px";
+        sheetWidth.value = window.innerWidth * 0.868 + "px";
 
         let container: any = document.getElementsByClassName("jexcel_content");
 
@@ -101,6 +103,7 @@ export default defineComponent({
         errorFlag.value = false;
       })
       bus.on("cancelEditSheet", () => {
+        crr_pagination_var = 25;
         cancel()
       })
       bus.on("register", () => {
@@ -110,7 +113,7 @@ export default defineComponent({
     });
     onBeforeMount(() => {
     })
-    let isFirst:any = ref(true);
+    let isFirst: any = ref(true);
     watch(props, async (val, old) => {
       visible.value = val.dialogVisibleEdit;
       parameter.value = val.editParams;
@@ -129,7 +132,7 @@ export default defineComponent({
         loadingDialog.value = true;
         emit("setButtonStatus", true);
         getPullDown(parameter.value);
-        
+
         await getColumns(parameter.value);
       }
     });
@@ -263,7 +266,7 @@ export default defineComponent({
 
       if (container[0]) {
         container[0].style.width = sheetWidth.value;
-        container[0].style.maxHeight = "500px";
+        container[0].style.maxHeight = "441px";
       }
 
       if (cell.classList.contains("readonly")) {
@@ -292,16 +295,16 @@ export default defineComponent({
       cell.style.textAlign = "left";
 
       // パラメータシート画面でパラメータのツールチップを追加
-      let columnHeaders:any = document.querySelectorAll('[data-x]');
+      let columnHeaders: any = document.querySelectorAll('[data-x]');
       if (columnHeaders.length != 0) {
         for (let i = 0; i < columnHeaders.length; i++) {
           let columnHeader = columnHeaders[i].getAttribute('title');
           if (columnHeader != null && columnHeader != undefined && columnHeader != '' && headertoolMapping.length != 0) {
             let text: any = columnHeaders[i].innerText;
             if (Object.prototype.hasOwnProperty.call(headertoolMapping, text)) {
-              columnHeaders[i].setAttribute('title',headertoolMapping[text])
+              columnHeaders[i].setAttribute('title', headertoolMapping[text])
             }
-         }
+          }
         }
       }
     };
@@ -569,7 +572,14 @@ export default defineComponent({
       updateTable: updateTable,
       ondeleterow: onDeleteRow,
       onbeforedeleterow: onBeforeDeleteRow,
-      lazyLoading: true,
+      // lazyLoading: true,
+      pagination: crr_pagination_var,
+      search: true,
+      paginationOptions: [15, 25, 50, 100],
+      onchangepage: function (instance: any, newPageNumber: number, oldPageNumber: number, rowsPerPage: number) {
+        const paginationDropdown_p: any = document.querySelector('.jexcel_pagination_dropdown');
+        crr_pagination_var = paginationDropdown_p?.value;
+      }
     };
 
     // ダウンロードファイル
@@ -616,14 +626,14 @@ export default defineComponent({
 
       spreadsheetEdit.value = null;
       visible.value = false;
-      
+
     };
     onBeforeUnmount(() => {
       spreadsheetEdit.value = null;
       while (spreadsheetEdit.value?.firstChild) {
         spreadsheetEdit.value.removeChild(spreadsheetEdit.value.firstChild);
       }
-      
+
 
     });
     const getJsonData = async (parameter: string, operation: string) => {
@@ -639,8 +649,10 @@ export default defineComponent({
         };
         optionName(params1, parameter).then((res: any) => {
           let dataJson = res.data.data;
+          old_optionsArr = dataJson;
           dataObj.length = 0;
           if (dataJson.length) {
+            old_optionsArr.value = dataJson;
             dataJson.forEach((element: any) => {
               let obj: any = {};
               element.parameter["actionType"] = "既存";
@@ -673,6 +685,7 @@ export default defineComponent({
               dataObj.push(obj);
             });
           } else {
+            old_optionsArr.value = [];
             dataObj.push([]);
           }
 
@@ -695,8 +708,8 @@ export default defineComponent({
             jspreadsheetObj.refresh();
           } catch (error: any) {
           }
-          
-          
+
+
           loadingDialog.value = false;
           emit("setButtonStatus", false);
         });
@@ -748,7 +761,7 @@ export default defineComponent({
             dataObj.length = 0;
             jspreadsheetObj.refresh();
           }
-          
+
           // group info
           let data1 = res.data.data.column_group_info;
           let data3 = res.data.data.column_info;
@@ -948,7 +961,7 @@ export default defineComponent({
                   obj3.source = operationList;
                   obj3.width = 400;
                   obj3["options"] = operationList[0];
-                  obj3.readOnly=true;
+                  obj3.readOnly = true;
                 }
                 operationColumn.push(obj3);
               } else if (element.column_group_id == null) {
@@ -1033,6 +1046,7 @@ export default defineComponent({
           }
           loadingFlag.value = false;
           try {
+            jSpreadSheetOptions.pagination = crr_pagination_var;
             jspreadsheetObj = jSpreadSheet(
               //DOM参照
               spreadsheetEdit.value,
@@ -1040,7 +1054,7 @@ export default defineComponent({
               jSpreadSheetOptions
             );
           } catch (error) {
-            
+
           }
           getJsonData(parameter.value, operation.value);
         })
@@ -1181,7 +1195,7 @@ export default defineComponent({
                   let result = unflatten(el);
                   obj.parameter = result.parameter;
                   obj.parameter.discard = "0";
-                  if (result.parameter.fileBase != "" && result.parameter.fileBase != "") {
+                  if (result.parameter.fileBase != "") {
                     obj.file.file = result.parameter.fileBase;
                   }
                   delete obj.parameter.fileBase;
@@ -1215,6 +1229,45 @@ export default defineComponent({
             });
           }
         }
+        old_optionsArr.forEach((o: any) => {
+          let parameter = o.parameter;
+          o.parameter.operation_name_select = operationList[0];
+          for (let key in parameter) {
+            if (key == "actionType") {
+              delete parameter["actionType"];
+            } else {
+              let ele: any = parameter[key];
+              let re = /\u0000/g;
+              let tmp = ele
+              try {
+                tmp = ele.toString().replace(re, '');
+              } catch (e: any) {
+                tmp = ele
+              }
+              if (tmp != ele) {
+                if (tmp === "") {
+                  // ファイルなしの場合、ファイル送付しない
+                  if (key == "file") {
+                    delete parameter["file"];
+                  } else {
+                    parameter[key] = null;
+                  }
+                } else {
+                  parameter[key] = tmp;
+                }
+              }
+              if (ele === "") {
+                // ファイルなしの場合、ファイル送付しない
+                if (key == "file") {
+                  delete parameter["file"];
+                } else {
+                  parameter[key] = null;
+                }
+              }
+            }
+          }
+        });
+
         optionsArr.forEach((o: any) => {
           let parameter = o.parameter;
           o.parameter.operation_name_select = operationList[0];
@@ -1253,8 +1306,50 @@ export default defineComponent({
             }
           }
         });
+
+        let indexes: any = [];
+        for (let index = 0; index < optionsArr.length; index++) {
+          const element = optionsArr[index];
+          if (element.type != "Register" && element.parameter.discard != "1") {
+            for (let index_old = 0; index_old < old_optionsArr.length; index_old++) {
+              if (element.parameter.uuid == old_optionsArr[index_old].parameter.uuid) {
+                if (old_optionsArr[index_old].file.file == null) {
+                  old_optionsArr[index_old].file.file == 'undefined'
+                }
+                if (element.file.file != old_optionsArr[index_old].file.file) {
+                  indexes.push(index)
+                  continue;
+                }
+                for (let key in element.parameter) {
+                  if (element.parameter[key] != old_optionsArr[index_old].parameter[key]) {
+                    indexes.push(index)
+                    continue;
+                  }
+                }
+              }
+            }
+          } else {
+            indexes.push(index)
+          }
+        }
+        indexes.sort((a: any, b: any) => b - a);
+        const filteredArray = optionsArr.filter((e: any, index: any) => indexes.includes(index));
         loadingDialog.value = true
-        optionAllRegister(optionsArr, parameter.value)
+        if (filteredArray.length == 0) {
+          ceEdit("true");
+          ElMessage({
+              type: "success",
+              message: "パラメータの保存が成功しました。",
+          });
+          errorFlag.value = false;
+          jspreadsheetObj.page(0);
+          emit("setButtonStatus", false);
+          isDisabled.value = false;
+          loadingDialog.value = false;
+          deleteRowsArray.length = 0;
+          return;
+        }
+        optionAllRegister(filteredArray, parameter.value)
           .then((res: any) => {
             ceEdit("true");
             // update operation
@@ -1272,6 +1367,7 @@ export default defineComponent({
             }
             emit("editSheetchangestatus", copystatus);
             getJsonData(parameter.value, operation.value);
+            jspreadsheetObj.page(0);
             isDisabled.value = false;
           })
           .catch((err: any) => {
@@ -1318,7 +1414,7 @@ export default defineComponent({
         deleteRowsArray.length = 0;
         emit("setButtonStatus", false);
       }
-      
+
     };
     const isJSON = (str: any) => {
       if (typeof str == "string") {
@@ -1334,7 +1430,8 @@ export default defineComponent({
         }
       }
     };
-   
+
+
     return {
       visible,
       register,
@@ -1370,26 +1467,48 @@ export default defineComponent({
 </style>
 <style lang="less">
 .editBoxSheet {
-  .jexcel > thead > tr > td {
+  .jexcel_content {
+    box-shadow: none !important;
+    border: 1px solid #dcdfe6;
+    width: auto !important;
+  }
+
+  .jexcel_filter>div:nth-child(2) {
+    display: none;
+  }
+
+  .jexcel>thead>tr>td {
     text-align: left;
   }
-  .jexcel > tbody > tr > td.readonly  {
+
+  .jexcel>tbody>tr>td.readonly {
     color: #606266;
   }
-  .jexcel > tbody > tr > td > a {
+
+  .jexcel>tbody>tr>td>a {
     color: blue;
   }
+
   .jexcel {
     width: max-content;
   }
+
   .jexcel_container {
-    display:flex;
-    width: 100% !important;
+    display: flex;
+    // width: 100% !important;
+    width: auto !important;
   }
+
   .jexcel_content {
-    height: 530px;
+    height: 421px !important;
     box-shadow: none !important;
     max-width: 100%;
+    min-height: 421px !important;
+  }
+
+  .jexcel_container {
+    display: flex;
+    flex-direction: column;
   }
 }
 </style>

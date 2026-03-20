@@ -59,7 +59,7 @@
         </div>
       </div>
     </div>
-    <div style="height: 26px;cursor:pointer" @click="isShow = !isShow">
+    <div style="height: 14px;cursor:pointer" @click="isShow = !isShow">
       <el-divider content-position="left"><el-icon v-show="!isShow">
           <CaretRight />
         </el-icon>
@@ -198,7 +198,8 @@ import {
   exportExcelAPI,
   relationships,
   getOperationDataSetInfosByFlag,
-  getDefOperationInfos
+  getDefOperationInfos,
+  getMenuDefinition
 } from "../../api/jobApi";
 import { importApi, } from "../../api/index";
 import {
@@ -866,11 +867,28 @@ export default defineComponent({
               };
               const optionsArr: Array<unknown> = [];
               let host = store.getHost;
-              optionName(params1, paraSheetLeft.value).then((res: any) => {
+              console.log(paraSheetLeft.value)
+              optionName(params1, paraSheetLeft.value).then(async (res: any) => {
+                // Sourceパラメータシート定義一覧取得
+                let diffItems: string[] = []
+                if (paraSheetLeftRegister.value != paraSheetLeft.value) {
+                  let res_B: any = await getMenuDefinition(paraSheetLeftRegister.value)
+                  let res_GR: any = await getMenuDefinition(paraSheetLeft.value)
+                  let col_info_B = res_B.data.data.menu_info.column
+                  let col_info_GR = res_GR.data.data.menu_info.column
+                  diffItems = findDifferentItemNames(col_info_GR, col_info_B)
+                }
+                 
                 let data = res.data.data;
                 data.forEach((baseObj: unknown) => {
                   hostList.forEach(async (itemHost: any) => {
-                    let obj1 = JSON.parse(JSON.stringify(baseObj));
+                    let obj1: any = null
+                    if (diffItems.length != 0) {
+                      let obj1_tmp = JSON.parse(JSON.stringify(baseObj));
+                      obj1 = deepDeleteKeys(obj1_tmp, diffItems);
+                    } else {
+                      obj1 = JSON.parse(JSON.stringify(baseObj));
+                    }
                     host.forEach((el) => {
                       if (el.host_name == obj1.parameter.host_name) {
                         if (itemHost == el.managed_system_item_number) {
@@ -1358,6 +1376,40 @@ export default defineComponent({
       
       
     })
+
+        function findDifferentItemNames(obj1: any, obj2: any) {
+      const names1 = new Set();
+      const names2 = new Set();
+
+      for (const key in obj1) {
+        if (obj1[key].item_name) {
+          names1.add(obj1[key].item_name);
+        }
+      }
+      for (const key in obj2) {
+        if (obj2[key].item_name) {
+          names2.add(obj2[key].item_name);
+        }
+      }
+      const diff = new Set([...names1].filter(x => !names2.has(x)));
+      return Array.from(diff)  as string[];
+    }
+
+    function deepDeleteKeys<T>(obj: T, keysToDelete: string[]): T {
+      if (typeof obj !== 'object' || obj === null) return obj;
+
+      if (Array.isArray(obj)) {
+        return obj.map(item => deepDeleteKeys(item, keysToDelete)) as unknown as T;
+      }
+
+      const newObj = {} as T;
+      Object.keys(obj).forEach(key => {
+        if (!keysToDelete.includes(key)) {
+          newObj[key as keyof T] = deepDeleteKeys(obj[key as keyof T], keysToDelete);
+        }
+      });
+      return newObj;
+    }
     return {
       cancel,
       loadingShow,

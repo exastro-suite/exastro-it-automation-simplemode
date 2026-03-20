@@ -43,6 +43,7 @@ export default defineComponent({
     const bus = eventBus();
     let data: any = reactive([]);
     let filePosition = ref(null);
+    let filePosition_Mapping: any = reactive({});
     let nestedHeaders: any = reactive([]);
     let jspreadsheetObj: any = ref();
     let headertoolMapping: any = reactive({});
@@ -91,9 +92,11 @@ export default defineComponent({
       }
 
       if (filePosition.value) {
-        if (col === Number(filePosition.value) - 7) {
-          cell.innerHTML =
-            '<a href="#" onclick="downloadFileByJob(' + row + ')">' + val + "</a>";
+        if (Object.prototype.hasOwnProperty.call(filePosition_Mapping, col)) {
+          let append_key:any = filePosition_Mapping[col];
+          cell.innerHTML = "<a href='#' onclick=downloadFileByJob("
+            + row + "," + '"' +  append_key  + '"' + ')>'
+            + val + " </a>";
         }
       }
 
@@ -113,10 +116,10 @@ export default defineComponent({
       }
     };
     // ダウンロードファイル
-    const downloadFileByJob = (rowNums: any) => {
+    const downloadFileByJob = (rowNums: any,append_key:string) => {
       const link = document.createElement("a");
       let rowData = jspreadsheetObj.getJsonRow(rowNums);
-      var bstr = atob(rowData["parameter.fileBase"]),
+      var bstr = atob(rowData["parameter.fileBase." + append_key]),
         n = bstr.length,
         u8arr = new Uint8Array(n);
       while (n--) {
@@ -125,11 +128,12 @@ export default defineComponent({
       let blob = new Blob([u8arr]);
       link.style.display = "none";
       link.href = URL.createObjectURL(blob);
-      link.setAttribute("download", rowData["parameter.file"]);
+      link.setAttribute("download", rowData["parameter." + append_key]);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
     };
+
     let columns: any = reactive([]);
     let operationColumn: any = reactive([]);
     let adminColumn: any = reactive([]);
@@ -171,9 +175,12 @@ export default defineComponent({
                   }
                 }
               }
-              if (eln["file.file"]) {
-                obj["parameter.fileBase"] = eln["file.file"];
-              }
+              const filekeys = Object.keys(element.file) as Array<keyof typeof obj>
+              filekeys.forEach((fileKey: any) => {
+                if (eln["file." + fileKey]) {
+                  obj["parameter.fileBase." + fileKey] = eln["file." + fileKey];
+                }
+              })
               obj["parameter.discard"] = "-";
               data.push(obj);
             });
@@ -214,6 +221,7 @@ export default defineComponent({
     let loadingDialog = ref(false);
     const opened = () => {
       filePosition.value = null;
+      filePosition_Mapping = reactive({});
       createSheet();
       loadingDialog.value = true;
       arr = [];
@@ -353,10 +361,14 @@ export default defineComponent({
       nestedHeaders: nestedHeaders,
       updateTable: updateTable,
       contextMenu: handlerContextMenu,
-      lazyLoading: true,
+      // lazyLoading: true,
+      pagination: 25,
+      search:true,
+      paginationOptions:[15,25,50,100]
     };
     const cancel = () => {
       filePosition.value = null;
+      filePosition_Mapping = reactive({});
       while (spreadsheet.value.firstChild) {
         spreadsheet.value.removeChild(spreadsheet.value.firstChild);
       }
@@ -618,14 +630,16 @@ export default defineComponent({
                   adminColumn.push(obj3);
                 }
               } else {
-                if (element.column_name_rest == "file") {
+                if (element.column_type == 'FileUploadColumn') {
+                  let key_name = "parameter.fileBase." + element.column_name_rest
                   filePosition.value = keyEle.slice(1);
                   obj3.allowUpload = true;
                   parameterColumn.push(obj3);
+                  filePosition_Mapping[parameterColumn.length + 1] = element.column_name_rest
                   let obj4: any = {
                     type: "hidden",
-                    title: "parameter.fileBase",
-                    name: "parameter.fileBase",
+                    title: key_name,
+                    name: key_name,
                     readOnly: false,
                     width: 1,
                   };
@@ -779,6 +793,14 @@ export default defineComponent({
   .jexcel_container {
     display:flex;
   }
+  .jexcel_content {
+    box-shadow: none !important;
+    border: 1px solid #dcdfe6;
+    width: auto !important;
+  }
+  .jexcel_filter > div:nth-child(2) {
+    display: none;
+  }
   .jexcel > thead > tr > td {
     text-align: left;
   }
@@ -792,10 +814,16 @@ export default defineComponent({
     width: max-content;
   }
   .jexcel_content {
-    height: 600px;
+    height: 423px;
     box-shadow: none !important;
     border: 1px solid #dcdfe6;
-    max-width: 100%
+    max-width: 100%;
+    max-height: 423px;
+  }
+
+  .jexcel_container {
+    display:flex;
+    flex-direction: column;
   }
 
   .el-dialog__body {

@@ -1127,7 +1127,9 @@ export default defineComponent({
           let arr1 = res.data.data;
           if (arr1.length) {
             arr1.forEach((element: any) => {
-              deviceListData.push(element.parameter);
+              if (element.parameter.managed_system_item_number == "1") {
+                deviceListData.push(element.parameter);
+              }
             });
             deviceListData.sort((a: any, b: any) => {
               return Date.parse(a["last_update_date_time"]) - Date.parse(b["last_update_date_time"]);

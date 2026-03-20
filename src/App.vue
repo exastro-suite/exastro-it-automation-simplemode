@@ -71,3 +71,20 @@ onUnmounted(() => {
   font-weight: normal;
 }
 </style>
+
+<style lang="less">
+.el-table .ascending .sort-caret.ascending {
+    border-bottom-color: #0960bd!important;
+}
+
+.el-table .descending .sort-caret.descending {
+    border-top-color: #0960bd!important;
+}
+.el-table .sort-caret.ascending {
+    border-bottom-color: #7F7F7F!important;
+}
+.el-table .sort-caret.descending {
+    border-top-color: #7F7F7F!important;
+    bottom: -3px;
+}
+</style>
