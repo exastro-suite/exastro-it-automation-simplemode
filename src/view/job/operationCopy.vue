@@ -25,7 +25,7 @@
               @change="checkBoxChange" />
           </p>
           <el-select v-model="operation" filterable class="m-2" placeholder="コピー元オペレーション名" @change="changeoperation"
-            :disabled="isDisabled || loadingShow" >
+            :disabled="isDisabled || loadingShow" style="width: 322px;">
             <el-option v-for="item in operationOptions" :key="item.value" :label="item.label" :value="item.label" :style="{ display: isGather? (isCheckBoxShow && checked1? (item.isFlagOne ? 'list-item':'none'):'list-item') : !item.isFlagOne ? 'list-item':'none'}"/>
           </el-select>
         </div>

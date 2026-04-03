@@ -163,7 +163,7 @@
     </template>
   </el-dialog>
   <el-dialog v-model="errormsgshow" @close="messagecancel" class="errorBox">
-    <h3>{{ errormsg }}</h3>
+    <h3 class="title_all">{{ errormsg }}</h3>
     <div class="errorTable" v-if="errormsgTableshow">
       <el-table :data="copyErrorTableData" border height="250px">
         <!-- <el-table-column width="90" prop="serialNum" label="操作" ></el-table-column> -->
@@ -867,7 +867,6 @@ export default defineComponent({
               };
               const optionsArr: Array<unknown> = [];
               let host = store.getHost;
-              console.log(paraSheetLeft.value)
               optionName(params1, paraSheetLeft.value).then(async (res: any) => {
                 // Sourceパラメータシート定義一覧取得
                 let diffItems: string[] = []
@@ -1250,7 +1249,7 @@ export default defineComponent({
     };
 
     const handleExceed: UploadProps["onExceed"] = (files) => {
-      upload.value!.clearFiles();
+      upload.value?.clearFiles();
       const file = files[0] as UploadRawFile;
       file.uid = genFileId();
       upload.value!.handleStart(file);
@@ -1327,7 +1326,7 @@ export default defineComponent({
       isBtnDisable.value = true;
       
       if (Object.keys(uploadFileCopy).length !== 0) {
-        upload.value!.clearFiles();
+        upload.value?.clearFiles();
         uploadFileCopy = {};
       }
       
@@ -1498,6 +1497,9 @@ export default defineComponent({
 </script>
 
 <style lang="less" scoped>
+.title_all{
+  margin-top: 0px;
+}
 .btnBoxLeft {
   margin: 15px 0 10px 0;
 
@@ -1695,6 +1697,10 @@ export default defineComponent({
     overflow-x: hidden !important;
     padding-top: 15px;
     padding-bottom: 15px;
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
+    height: auto;
+    overflow-y: hidden;
   }
 
   .el-dialog__header {
@@ -1741,6 +1747,7 @@ export default defineComponent({
   .el-dialog__header {
     padding-bottom: 0 !important;
     padding-top: 0px !important;
+    padding: 8px 20px !important;
   }
 }
 

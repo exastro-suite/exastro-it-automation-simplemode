@@ -31,6 +31,7 @@
                   v-model="formCommon.hw_device_type"
                   class="m-2"
                   placeholder=" "
+                  style="width: 164px;"
                 >
                   <el-option
                     v-for="item in hwDeviceType"
@@ -233,6 +234,7 @@
                     v-model="formCommon.authentication_method"
                     class="m-2"
                     placeholder=" "
+                    style="width: 225px;"
                   >
                     <el-option
                       v-for="item in authenticationMethod"
@@ -295,6 +297,7 @@
                   v-model="formCommon.connection_type"
                   class="m-2"
                   placeholder=" "
+                  style="width: 225px;"
                 >
                   <el-option
                     v-for="item in connectionType"
@@ -316,6 +319,7 @@
                   v-model="formCommon.instance_group_name"
                   class="m-2"
                   placeholder=" "
+                  style="width: 225px;"
                 >
                   <el-option
                     v-for="item in instanceGroupName"
@@ -562,14 +566,14 @@ export default defineComponent({
 
     //ssh秘密鍵ファイル
     const handleExceed: UploadProps["onExceed"] = (files) => {
-      upload.value!.clearFiles();
+      upload.value?.clearFiles();
       const file = files[0] as UploadRawFile;
       file.uid = genFileId();
       upload.value!.handleStart(file);
     };
     // WinRM接続(サーバー証明書)
     const handleExceedServer: UploadProps["onExceed"] = (files) => {
-      uploadServer.value!.clearFiles();
+      uploadServer.value?.clearFiles();
       const file = files[0] as UploadRawFile;
       file.uid = genFileId();
       uploadServer.value!.handleStart(file);
@@ -601,8 +605,8 @@ export default defineComponent({
       resetForm(formAnsibleRef.value);
       resetForm(formAnsibleRef1.value);
       resetForm(formAnsibleRef2.value);
-      upload.value!.clearFiles();
-      uploadServer.value!.clearFiles();
+      upload.value?.clearFiles();
+      uploadServer.value?.clearFiles();
       fileName.value = "";
       fileNameServer.value = "";
     };
@@ -768,7 +772,7 @@ export default defineComponent({
 .el-dialog__body {
   padding-top: 10px !important;
   padding-bottom: 10px !important;
-  overflow-x: scroll;
+  overflow-x: auto;
   height: auto;
   overflow-y: hidden;
 }

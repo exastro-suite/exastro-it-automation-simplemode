@@ -87,4 +87,37 @@ onUnmounted(() => {
     border-top-color: #7F7F7F!important;
     bottom: -3px;
 }
+
+.el-message-box__status {
+    font-size: 24px !important;
+}
+
+.el-dialog__footer {
+ padding: var(--el-dialog-padding-primary) !important;
+ padding-top: 10px !important;
+}
+
+.el-dialog {
+  padding :0px !important;
+}
+
+.el-dialog {
+  --el-dialog-padding-primary: 20px !important;
+}
+
+.el-dialog__body {
+  padding: var(--el-dialog-padding-primary) !important;
+}
+
+.el-message-box {
+  --el-messagebox-padding-primary: 15px !important;
+}
+
+.el-message-box__container {
+  padding-right: 20px !important;
+}
+
+.el-dialog__header {
+  padding: 20px 20px !important;
+}
 </style>

@@ -442,7 +442,6 @@ const processColumnHeader = (info: any, targetWorksheet: ExcelJS.Worksheet, grou
       let file_str  = columnsName[element]
       targetWorksheet.getCell(rowIndex, colIndex).value = columnsName[element];
       targetWorksheet.getCell(rowIndex, colIndex).alignment = { vertical: 'top' };
-      console.log(file_str)
       if (file_row.length != 0 && file_row[file_inx].hasOwnProperty(file_str)) {
         let file_row_var = file_row[file_inx];
         let count = file_row_var[file_str];

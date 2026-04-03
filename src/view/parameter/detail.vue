@@ -10,7 +10,7 @@
         <!-- <p>コピー元オペレーション名<el-switch v-model="switchValue" size="default" inactive-text="　"
             style="--el-switch-on-color: #0960bd;" /></p> -->
         <el-select ref="operationselect" v-model="operation" filterable class="m-2" placeholder="オペレーション名（基準日時）を選択"
-          :disabled="isDisabled || loadingShow || isDisabledRight || changeShow" @change="changeoperation">
+          :disabled="isDisabled || loadingShow || isDisabledRight || changeShow" @change="changeoperation" style="width: 442px;">
 
           <el-option v-for="item in optionsdata" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
@@ -101,7 +101,7 @@
       :readParams="paramsSheetValue"></ReadOnlySheet>
   </div>
   <el-dialog v-model="errormsgshow" @close="messagecancel" class="errorBox1" :close-on-click-modal="false" :close-on-press-escape="false">
-    <h3><el-icon style="color: #f56c6c;">
+    <h3 class="title_all"><el-icon style="color: #f56c6c;">
         <CircleCloseFilled />
       </el-icon>&nbsp;以下パラメータシートのダウンロードに失敗しました。</h3>
     <div class="errorTable" v-if="errormsgTableshow">
@@ -116,7 +116,7 @@
     </template>
   </el-dialog>
   <el-dialog v-model="dlmsgshow" @close="dlmessagecancel" class="errorBox1" style="width: 550px;" :close-on-click-modal="false" :close-on-press-escape="false">
-    <h3 class="title"> <el-icon style="margin-right: 15px;"><Download/></el-icon>一括出力フォーマットを選択してください。</h3>
+    <h3 class="title_all"> <el-icon style="margin-right: 15px;"><Download/></el-icon>一括出力フォーマットを選択してください。</h3>
    
     <el-divider style="margin-bottom: 35px;margin-top: 10px;"/>
     <el-radio-group v-model="dltypeList">
@@ -298,7 +298,6 @@ export default defineComponent({
             downloadJson(sheetList[i]['menu_name_ja'] + "_" + operationName.value + ".json", code, true);
           });
         } catch (error: any) {
-          console.log(error.message)
           ElMessage({
             type: "error",
             message: sheetList[i]['menu_name_ja'] + "のダウンロードに失敗しました。"
@@ -342,7 +341,6 @@ export default defineComponent({
             );
           });
         } catch (error: any) {
-          console.log(error.message)
           ElMessage({
             type: "error",
             message: sheetList[i]['menu_name_ja'] + "のダウンロードに失敗しました。"
@@ -877,7 +875,6 @@ export default defineComponent({
           }
         } catch (error: any) {
           errorTableData.length = 0;
-          console.log(error.message)
           disload();
           changeShow.value = false;
           emit("buttonDisabled", false);
@@ -1287,6 +1284,9 @@ export default defineComponent({
 });
 </script>
 <style scoped lang="less">
+.title_all{
+  margin-top: 0px;
+}
 .el-radio-group {
   padding-bottom: 10px;
   /deep/.el-radio.is-bordered.is-checked {
@@ -1449,8 +1449,9 @@ export default defineComponent({
   .el-dialog__header {
     padding-bottom: 0px !important;
     padding-top: 0px !important;
-    padding-left: 0px !important;
     padding-right: 0px !important;
+    padding: 8px 20px !important;
+    
   }
 
   .el-dialog__footer {
