@@ -1,5 +1,5 @@
 <template>
-  <el-dialog v-model="visible" :close-on-click-modal="false" :close-on-press-escape="false" class="detailBoxSheet"
+  <el-dialog v-model="visible" :close-on-click-modal="false" :close-on-press-escape="false" class="detailBoxSheet1"
     :show-close="false">
 
     <el-dialog :close-on-click-modal="false" :close-on-press-escape="false" v-model="confirmVisible" width="70%"
@@ -109,7 +109,7 @@
     </template>
   </el-dialog>
   <el-dialog v-model="errormsgshow" @close="messagecancel" class="errorBox">
-    <h3>{{ errormsg }}</h3>
+    <h3 class="title_all">{{ errormsg }}</h3>
     <div class="errorTable" v-if="errormsgTableshow">
       <el-table :data="copyErrorTableData" border height="250px">
         <el-table-column width="150" prop="title" label="エラー列"></el-table-column>
@@ -1011,7 +1011,7 @@ export default defineComponent({
     };
 
     const handleExceed: UploadProps["onExceed"] = (files) => {
-      upload.value!.clearFiles();
+      upload.value?.clearFiles();
       const file = files[0] as UploadRawFile;
       file.uid = genFileId();
       upload.value!.handleStart(file);
@@ -1088,7 +1088,7 @@ export default defineComponent({
       isBtnDisable.value = true;
 
       if (Object.keys(uploadFileCopy).length !== 0) {
-        upload.value!.clearFiles();
+        upload.value?.clearFiles();
         uploadFileCopy = {};
       }
 
@@ -1127,7 +1127,9 @@ export default defineComponent({
           let arr1 = res.data.data;
           if (arr1.length) {
             arr1.forEach((element: any) => {
-              deviceListData.push(element.parameter);
+              if (element.parameter.managed_system_item_number == "1") {
+                deviceListData.push(element.parameter);
+              }
             });
             deviceListData.sort((a: any, b: any) => {
               return Date.parse(a["last_update_date_time"]) - Date.parse(b["last_update_date_time"]);
@@ -1226,6 +1228,9 @@ export default defineComponent({
 </script>
 
 <style lang="less" scoped>
+.title_all{
+  margin-top: 0px;
+}
 .btnBoxLeft {
   margin: 15px 0 10px 0;
 
@@ -1415,7 +1420,7 @@ export default defineComponent({
 }
 </style>
 <style lang="less">
-.detailBoxSheet {
+.detailBoxSheet1 {
   --el-dialog-width: 90% !important;
   --el-dialog-margin-top: 1vh;
 
@@ -1469,6 +1474,8 @@ export default defineComponent({
   .el-dialog__header {
     padding-bottom: 0 !important;
     padding-top: 0px !important;
+    padding-right: 0px !important;
+    padding : 8px 20px !important;
   }
 }
 

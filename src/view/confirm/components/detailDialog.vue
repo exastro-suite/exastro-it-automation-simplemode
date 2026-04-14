@@ -363,11 +363,18 @@ export default defineComponent({
     overflow-y: scroll;
   }
 }
+
 </style>
 <style lang="less">
 .detailDialog {
   .el-dialog__body {
     overflow-x: hidden !important;
   }
+
+  .el-dialog__header {
+    padding: 20px 20px !important;
+    padding-bottom: 0px !important;
+  }
 }
+
 </style>

@@ -919,7 +919,7 @@ export default defineComponent({
   }
 
   .el-dialog__header {
-    padding: 8px 20px;
+    padding: 8px 20px !important;
   }
 
   .el-dialog__headerbtn {

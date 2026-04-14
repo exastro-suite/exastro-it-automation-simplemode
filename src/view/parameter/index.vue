@@ -14,24 +14,27 @@
   </el-steps>
   <div class="contentCenterBox">
     <keep-alive>
-      <parameterSheetTypeSelect v-if="active==0" @setSelectType = "setSelectType">
-    </parameterSheetTypeSelect>
+      <parameterSheetTypeSelect v-if="active==0" @setSelectType="setSelectType">
+      </parameterSheetTypeSelect>
     </keep-alive>
     <KeepAlive>
-      <parameterSheetSelectView v-if="active==1" :selectType = "selType" :selectedMenuGroupType = "menu_group_type" :prev="isPrev" @selectedParamterInfos="setSelParamterInfos">
+      <parameterSheetSelectView v-if="active==1" :selectType="selType" :selectedMenuGroupType="menu_group_type"
+        :prev="isPrev" @selectedParamterInfos="setSelParamterInfos">
       </parameterSheetSelectView>
     </KeepAlive>
     <KeepAlive>
-      <parameterSheetDetailView v-if="active==2" :selParamters="selParamInfos" :prev="isPrev2" @buttonDisabled="setButtondisabled">
+      <parameterSheetDetailView v-if="active==2" :selParamters="selParamInfos" :prev="isPrev2"
+        @buttonDisabled="setButtondisabled">
       </parameterSheetDetailView>
     </KeepAlive>
   </div>
   <div class="steps-action">
     <div>
-      <el-button :disabled = "prevDsabled" class="backBtn" v-if="active == 1 || active == 2" @click="prev">もどる</el-button>
-      <el-button :disabled = "nextDsabled" class="nextBtn" v-if="active == 0 || active == 1" @click="next">つぎへ</el-button>
-      <el-tooltip class="item" effect="light" content="選択した全部パラメータシートを階層型フォーマットのExcelに出力します" placement="top">
-      <el-button :disabled = "nextDsabled" class="nextBtn" v-if="active == 2" @click="downloadAllSysFile">階層型Excel出力実行</el-button>
+      <el-button :disabled="prevDsabled" class="backBtn" v-if="active == 1 || active == 2" @click="prev">もどる</el-button>
+      <el-button :disabled="nextDsabled" class="nextBtn" v-if="active == 0 || active == 1" @click="next">つぎへ</el-button>
+      <el-tooltip class="item" effect="light" content="選択した全部パラメータシートを出力します。" placement="top">
+        <el-button :disabled="nextDsabled" class="nextBtndl" v-if="active == 2"
+          @click="downloadSelectView">一括ダウンロード実行</el-button>
       </el-tooltip>
     </div>
   </div>
@@ -47,10 +50,11 @@ import parameterSheetTypeSelect from "./parameterSheetTypeSelect.vue";
 import parameterSheetSelectView from "./parameterSheetSelect.vue";
 import parameterSheetDetailView from "./detail.vue";
 import { eventBus } from "../../store/eventBus";
+import { Download,QuestionFilled} from "@element-plus/icons-vue";
 
 export default defineComponent({
   name: "index",
-  components: {ElSteps,ElStep,parameterSheetTypeSelect,parameterSheetSelectView,parameterSheetDetailView},
+  components: {ElSteps,ElStep,parameterSheetTypeSelect,parameterSheetSelectView,parameterSheetDetailView,Download,QuestionFilled},
   setup() {
     const active: any = ref(0);
     const selType: any = ref('');
@@ -96,6 +100,9 @@ export default defineComponent({
     const downloadAllSysFile = () => {
       bus.emit("downloadSysFile", true);
     }
+    const downloadSelectView = () => {
+      bus.emit("downloadSelectView", true);
+    }
 
     const setSelParamterInfos = (seledParamInfos: any) => {
       selParamInfos.value = seledParamInfos;
@@ -111,7 +118,7 @@ export default defineComponent({
       nextDsabled.value = isDisabled;
       prevDsabled.value = isDisabled;
     }
-    return { setButtondisabled,downloadAllSysFile,active,selType,prevDsabled,nextDsabled,next, prev,setSelParamterInfos,setSelectType,selectedTypeName,menu_group_type,isPrev,isPrev2,selParamInfos};
+    return { setButtondisabled,downloadAllSysFile,active,selType,prevDsabled,nextDsabled,next, prev,setSelParamterInfos,setSelectType,selectedTypeName,menu_group_type,isPrev,isPrev2,selParamInfos, downloadSelectView};
   }
 });
 </script>
@@ -182,6 +189,17 @@ export default defineComponent({
   .nextBtn {
     margin-right: 20px;
     padding: 0 50px;
+    border-radius: 8px;
+    color: #fff;
+    background-color: #da6a38;
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+   .nextBtndl {
+    margin-right: 20px;
+    padding: 0 20px;
     border-radius: 8px;
     color: #fff;
     background-color: #da6a38;

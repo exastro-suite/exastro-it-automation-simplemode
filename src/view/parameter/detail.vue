@@ -1,7 +1,7 @@
 <template>
   <div class="steps-third" element-loading-text="loading...">
-    <p>パラメータ参照及びパラメータダウンロード（Excel／Json）ができます。</p>
-
+    <p style="margin-bottom: 8px;">パラメータ参照およびダウンロード（階層型／ITA形式）ができます。</p>
+    <p style="margin-top: 7px;">一括ダウンロードは複数選択後に右下の［一括ダウンロード実行］、個別ダウンロードは該当行の［ダウンロード］を押下します。</p>
     <div class="topCardBox">
       <div class="tabBox">
         <p>　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　　</p>
@@ -10,7 +10,7 @@
         <!-- <p>コピー元オペレーション名<el-switch v-model="switchValue" size="default" inactive-text="　"
             style="--el-switch-on-color: #0960bd;" /></p> -->
         <el-select ref="operationselect" v-model="operation" filterable class="m-2" placeholder="オペレーション名（基準日時）を選択"
-          :disabled="isDisabled || loadingShow || isDisabledRight || changeShow" @change="changeoperation">
+          :disabled="isDisabled || loadingShow || isDisabledRight || changeShow" @change="changeoperation" style="width: 442px;">
 
           <el-option v-for="item in optionsdata" :key="item.value" :label="item.label" :value="item.value" />
         </el-select>
@@ -29,8 +29,8 @@
         <el-table-column v-if="item.dataIndex == 'num'" :prop="item.dataIndex" :label="item.title" max-width="90"
           width="90">
           <template #default="scope"><span :class="scope.row.num == '0' ? 'notFinished' : 'finished'">{{
-            scope.row.num
-          }}</span></template>
+              scope.row.num
+              }}</span></template>
         </el-table-column>
         <el-table-column v-if="item.dataIndex == 'action'" :prop="item.dataIndex" :label="item.title" class="no-click">
           <template #default="scope">
@@ -82,7 +82,7 @@
                         @click="downloadITAJson">
                         <div><el-icon>
                             <Download />
-                          </el-icon>Jsonフォーマット(Json)</div>
+                          </el-icon>ITAフォーマット(Json)</div>
                       </el-dropdown-item>
                     </span>
                   </el-tooltip>
@@ -100,19 +100,54 @@
     <ReadOnlySheet :dialogVisibleSheet="dialogVisibleSheet" :readOperation="operationName" @change="change"
       :readParams="paramsSheetValue"></ReadOnlySheet>
   </div>
+  <el-dialog v-model="errormsgshow" @close="messagecancel" class="errorBox1" :close-on-click-modal="false" :close-on-press-escape="false">
+    <h3 class="title_all"><el-icon style="color: #f56c6c;">
+        <CircleCloseFilled />
+      </el-icon>&nbsp;以下パラメータシートのダウンロードに失敗しました。</h3>
+    <div class="errorTable" v-if="errormsgTableshow">
+      <el-table :data="errorTableData" border height="250px">
+        <el-table-column prop="title" label="パラメータシート"></el-table-column>
+      </el-table>
+    </div>
+    <template #footer>
+      <div class="dialog-footer" style="padding-top: 0%;">
+        <el-button @click="messagecancel">閉じる</el-button>
+      </div>
+    </template>
+  </el-dialog>
+  <el-dialog v-model="dlmsgshow" @close="dlmessagecancel" class="errorBox1" style="width: 550px;" :close-on-click-modal="false" :close-on-press-escape="false">
+    <h3 class="title_all"> <el-icon style="margin-right: 15px;"><Download/></el-icon>一括出力フォーマットを選択してください。</h3>
+   
+    <el-divider style="margin-bottom: 35px;margin-top: 10px;"/>
+    <el-radio-group v-model="dltypeList">
+        <el-radio  v-for="item in radios" :label="item.value" :key="item.value" border style="width: 500px;margin-bottom: 5px;height: 35px;" @change="changeFmType">
+          {{ item.label }}
+        </el-radio>
+    </el-radio-group>
+    <div>
+
+    </div>
+     <template #footer>
+      <div class="dialog-footer" style="padding-top: 0%;">
+        <el-button @click="dlmessagecancel" style="margin-top: 50px;border-radius: 8px">キャンセル</el-button>
+        <el-button @click="dlRun" style="margin-top: 50px;" class="nextBtn_dl">出力実行</el-button>
+      </div>
+    </template>
+  </el-dialog>
 </template>
 <script lang="ts">
 import { defineComponent, reactive, ref, watch, onMounted, onBeforeUnmount } from "vue";
-import { Download, ArrowLeft, Search } from "@element-plus/icons-vue";
+import { Download, ArrowLeft, Search,CircleCloseFilled, QuestionFilled } from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";
 import { operationListForFlag, getDefOperationDataSetInfos } from "../../api/jobList";
 import { getOperationCount, exportExcelAPI, optionName, sheetColumnList } from "../../api/jobApi.ts";
 import { downloadSysExcelFile ,loadExcelTemplate,assembleData4Gp,assembleCatalog} from "../../utils/downloadFile.ts";
 import ReadOnlySheet from "./readOnlySheet.vue";
 import { eventBus } from "../../store/eventBus";
+
 export default defineComponent({
   name: "sheetdetail",
-  components: { Search, Download, ReadOnlySheet },
+  components: { Search, Download, ReadOnlySheet,CircleCloseFilled,QuestionFilled },
   emits: ['buttonDisabled'],
   props: ["selParamters", "prev"],
   setup(props, { emit }) {
@@ -158,10 +193,31 @@ export default defineComponent({
         dataIndex: "action",
       },
     ]);
+    const dlmsgshow: any = ref(false);
+    // get radios list
+    const dltypeList = ref<any>(null);
+    let radios: any = reactive([
+      {
+        value: 1,
+        label: "階層型フォーマット(Excel)"
+      },
+      {
+        value: 2,
+        label: "ITAフォーマット(Excel)"
+      },
+      {
+        value: 3,
+        label: "ITAフォーマット(Json)"
+      },
+    ]);
+    const fmType: any = ref(null);
+    const errormsgshow: any = ref(false);
+    const errormsgTableshow: any = ref(false);
+    let errorTableData: any = reactive([]);
     onMounted(() => {
-      tableHeight.value = window.innerHeight - 380;
+      tableHeight.value = window.innerHeight - 395;
       window.onresize = () => {
-        tableHeight.value = window.innerHeight - 380;
+        tableHeight.value = window.innerHeight - 395;
       };
     })
     watch(props, async (val, old) => {
@@ -223,6 +279,88 @@ export default defineComponent({
       dialogVisibleSheet.value = true;
     };
 
+    const downloadAllJsonFile = async () => {
+      errorTableData.length = 0;
+      changeShow.value = true;
+      let sheetList: any = [...selectedSheet];
+      emit("buttonDisabled", true);
+      total.value = sheetList.length;
+      progress.value = 0;
+      for (let i = 0; i < sheetList.length; i++) {
+        try {
+          let obj = {
+            discard: { NORMAL: "0" },
+            operation_name_disp: { LIST: [operationName.value] },
+          };
+          progress.value++;
+          await optionName(obj, sheetList[i]['menu_name_rest']).then(async (res: any) => {
+            let code = res.data.data;
+            downloadJson(sheetList[i]['menu_name_ja'] + "_" + operationName.value + ".json", code, true);
+          });
+        } catch (error: any) {
+          ElMessage({
+            type: "error",
+            message: sheetList[i]['menu_name_ja'] + "のダウンロードに失敗しました。"
+          });
+          let obj: any = {};
+          obj.title = sheetList[i]['menu_name_ja'];
+          errorTableData.push(obj);
+        }
+      }
+      changeShow.value = false;
+      disload();
+      emit("buttonDisabled", false);
+      progress.value = 0;
+      total.value = 0;
+      if (errorTableData.length > 0) {
+        errormsgshow.value = true;
+        errormsgTableshow.value = true;
+      }
+    }
+
+    const downloadAllItaFile = async (isALL: any) => {
+      errorTableData.length = 0;
+      changeShow.value = true;
+      let sheetList: any = [...selectedSheet];
+      emit("buttonDisabled", true);
+      total.value = sheetList.length;
+      progress.value = 0;
+      for (let i = 0; i < sheetList.length; i++) {
+        try {
+          let obj = {
+            discard: { NORMAL: "0" },
+            operation_name_disp: { LIST: [operationName.value] },
+          };
+          progress.value ++
+          await exportExcelAPI(obj, sheetList[i]['menu_name_rest']).then(async (res: any) => {
+            let base64Code = res.data.data;
+            dataURLtoDownload(
+              base64Code,
+              sheetList[i]['menu_name_ja'] + "_" + operationName.value + ".xlsx",
+              true
+            );
+          });
+        } catch (error: any) {
+          ElMessage({
+            type: "error",
+            message: sheetList[i]['menu_name_ja'] + "のダウンロードに失敗しました。"
+          });
+          let obj: any = {};
+          obj.title = sheetList[i]['menu_name_ja'];
+          errorTableData.push(obj);
+        }
+      }
+      changeShow.value = false;
+      disload();
+      emit("buttonDisabled", false);
+      progress.value = 0;
+      total.value = 0;
+      if (errorTableData.length > 0) {
+        errormsgshow.value = true;
+        errormsgTableshow.value = true;
+      }
+    }
+
     const downloadSysFile = async (isALL: any) => {
       if (operationName.value == "") {
         ElMessage({
@@ -243,6 +381,7 @@ export default defineComponent({
       let workbook = await loadExcelTemplate();
       load();
       if (isALL) {
+        errorTableData.length = 0;
         sheetList = [...selectedSheet];
         sheetList.sort((a: any, b: any) => {
           if (a.description_ja < b.description_ja) {
@@ -324,6 +463,7 @@ export default defineComponent({
             // 代入順序 input_order flag
             let hasInputOrder: boolean = false;
             let columnsName: any = {};
+            let columnNameRest: any = {};
             // columnsNameを作成する
             for (const key in data3) {
               if (Object.prototype.hasOwnProperty.call(data3, key)) {
@@ -333,12 +473,16 @@ export default defineComponent({
                   hasInputOrder = true;
                 }
                 columnsName[key] = element.column_name;
+                columnNameRest[key] = element.column_name_rest;
               }
             }
             if (hasInputOrder) {
               columnsName["c1"] = "input_order";
+              columnNameRest["c1"] = "input_order";
             }
             let v_Order: any = [];
+            let has_col = false;
+            let has_g = false;
             // パラメータ key is g1/g2/g3
             for (const key in data1) {
               if (Object.prototype.hasOwnProperty.call(data1, key)) {
@@ -367,7 +511,19 @@ export default defineComponent({
                     v_Order.push(...columns);
                   }
                   // ColumnHeaderを作成
-                  buildColumnHeaders(data1, hasInputOrder, main_group_name_key, columns, tagObject, sub_gp_count, group_idx, 1, v_Order)
+                  
+                  columns.forEach((el: any) => {
+                    if (el.match(matchingC) && "VAR_OS_python_cmd" == columnsName[el]) {
+                      has_col = true;
+                    }
+                    if (el.match(matchingG)) {
+                      has_g = true;
+                    }
+                  })
+                  if (!has_col || !has_g) {
+                    has_col = false
+                  }
+                  buildColumnHeaders(data1, hasInputOrder, main_group_name_key, columns, tagObject, sub_gp_count, group_idx, 1, v_Order,has_col)
                   tagObject['sub_gp_count'] = sub_gp_count.sort((a: any, b: any) => b - a)[0];
                   if (sub_gp_count.length == 0) {
                     tagObject['sub_gp_count'] = 0;
@@ -375,6 +531,10 @@ export default defineComponent({
                       tagObject['g1']["columns"].splice(0, 0, 'c1');
                       v_Order.splice(0, 0, 'c1');
                     }
+                  }
+                  if (sub_gp_count.length != 0 && has_col) {
+                    tagObject['g1']["columns"].splice(0, 0, 'c1');
+                    v_Order = tagObject['g1']["columns"].concat(v_Order);
                   }
                   // columnsNameを作成する。
                   tagObject['columnsName'] = columnsName;
@@ -387,7 +547,7 @@ export default defineComponent({
             // key  transition
             v_Order.forEach((element: any) => {
               if (!element.match(matchingG)) {
-                key_v_Order.push(columnHeaders[menu_name_rest][0]['columnsName'][element]);
+                key_v_Order.push(columnNameRest[element]);
               }
             });
 
@@ -409,31 +569,47 @@ export default defineComponent({
                   let obj: any = { 'host_name': element.parameter.host_name };
                   for (let key in columnsName) {
                     if (columnsName.hasOwnProperty(key)) {
-                      let val = columnsName[key];
-
+                      let val = columnNameRest[key];
                       if (element.parameter.hasOwnProperty(val)) {
-                        if (val == 'file') {
-                          if (element.file.file == null) {
+                        if (element.file.hasOwnProperty(val)) {
+                          if (!obj.hasOwnProperty('file_row')) {
+                            obj.file_row = {}
+                          }
+                          if (element.file[val] == null) {
                             obj[val] = ""
-                            obj.file_row = 0;
+                            obj.file_row[val] = 0
                           } else {
-
-                            var bstr = atob(element.file.file),
-                              n = bstr.length,
-                              u8arr = new Uint8Array(n);
-                            while (n--) {
-                              u8arr[n] = bstr.charCodeAt(n);
+                            var fname = element.parameter[val]
+                            var isTextFile = true;
+                            var decodedText = 'not a text file';
+                            if (fname.endsWith('.jpg') ||
+                              fname.endsWith('.png') ||
+                              fname.endsWith('.gif') ||
+                              fname.endsWith('.zip') ||
+                              fname.endsWith('.tar') ||
+                              fname.endsWith('.gz')) {
+                              isTextFile = false;
                             }
-                            const decoder = new TextDecoder('utf-8');
-                            const decodedText = decoder.decode(u8arr);
+                            if (isTextFile) {
+                              var bstr = atob(element.file[val]),
+                                n = bstr.length,
+                                u8arr = new Uint8Array(n);
+                              if (isPlainTextFile(bstr)) {
+                                while (n--) {
+                                  u8arr[n] = bstr.charCodeAt(n);
+                                }
+                                const decoder = new TextDecoder('utf-8');
+                                decodedText = decoder.decode(u8arr);
+                              }
+                            }
                             obj[val] = decodedText
                             let resultStrList: string[] = splitStringIfExceedsLimit(decodedText);
+                            
                             if (resultStrList.length == 1) {
-                              obj.file_row = 0;
+                              obj.file_row[val] = 0;
                             } else {
-                              obj.file_row = resultStrList.length;
+                              obj.file_row[val] = resultStrList.length;
                             }
-
                           }
                         } else {
                           obj[val] = element.parameter[val]
@@ -456,27 +632,45 @@ export default defineComponent({
                   let obj: any = { 'host_name': element.parameter.host_name };
                   for (let key in columnsName) {
                     if (columnsName.hasOwnProperty(key)) {
-                      let val = columnsName[key];
+                      let val = columnNameRest[key];
                       if (element.parameter.hasOwnProperty(val)) {
-                        if (val == 'file') {
-                          if (element.file.file == null) {
+                        if (element.file.hasOwnProperty(val)) {
+                          if (!obj.hasOwnProperty('file_row')) {
+                            obj.file_row = {}
+                          }
+                          if (element.file[val] == null) {
                             obj[val] = ""
-                            obj.file_row = 1;
+                            obj.file_row[val] = 0
                           } else {
-                            var bstr = atob(element.file.file),
-                              n = bstr.length,
-                              u8arr = new Uint8Array(n);
-                            while (n--) {
-                              u8arr[n] = bstr.charCodeAt(n);
+                            var fname = element.parameter[val];
+                            var isTextFile = true;
+                            var decodedText = 'not a text file';
+                            if (fname.endsWith('.jpg') ||
+                              fname.endsWith('.png') ||
+                              fname.endsWith('.gif') ||
+                              fname.endsWith('.zip') ||
+                              fname.endsWith('.tar') ||
+                              fname.endsWith('.gz')) {
+                              isTextFile = false;
                             }
-                            const decoder = new TextDecoder('utf-8');
-                            const decodedText = decoder.decode(u8arr);
+                            if (isTextFile) {
+                              var bstr = atob(element.file[val]),
+                                n = bstr.length,
+                                u8arr = new Uint8Array(n);
+                              if (isPlainTextFile(bstr)) {
+                                while (n--) {
+                                  u8arr[n] = bstr.charCodeAt(n);
+                                }
+                                const decoder = new TextDecoder('utf-8');
+                                decodedText = decoder.decode(u8arr);
+                              }
+                            }
                             obj[val] = decodedText
                             let resultStrList: string[] = splitStringIfExceedsLimit(decodedText);
                             if (resultStrList.length == 1) {
-                              obj.file_row = 0;
+                              obj.file_row[val] = 0;
                             } else {
-                              obj.file_row = resultStrList.length;
+                              obj.file_row[val] = resultStrList.length;
                             }
                           }
                         } else {
@@ -542,8 +736,9 @@ export default defineComponent({
                       o_data.forEach((tdata: any) => {
                         key_v_Order.forEach((elorder: any) => {
                           let tmp_data = tdata[elorder];
-                          if (elorder == 'file') {
-                            let inster_data_num = file_row[index_hostname];
+                          if (el.hasOwnProperty('file_row') && file_row[index_hostname].hasOwnProperty(elorder)) {
+                            let inster_data_num_obj = file_row[index_hostname];
+                            let inster_data_num = inster_data_num_obj[elorder];
                             let resultStrList: string[] = splitStringIfExceedsLimit(tmp_data);
                             if (inster_data_num == 0) {
                               chang_column_Datas.push(resultStrList[inster_data_num])
@@ -585,15 +780,14 @@ export default defineComponent({
                 for (let index_order = 0; index_order < uniqueArray.length; index_order++) {
                   let inputOrder = uniqueArray[index_order];
                   simplification_column_Datas.forEach((el: any) => {
-                    if (el.hasOwnProperty('file')) {
+                    if (el.hasOwnProperty('file_row')) {
                       if (el.input_order == inputOrder) {
                         if (file_row.length == 0 || file_row[index_order] == undefined) {
                           file_row.push(el.file_row);
                         } else {
                           let fileRow = file_row[index_order];
-                          if (el.file_row > fileRow) {
-                            file_row.splice(index_order, index_order, el.file_row);
-                          }
+                          let merged = mergeWithMax(fileRow, el.file_row);
+                          file_row.splice(index_order, index_order, merged);
                         }
                       }
                     }
@@ -611,8 +805,10 @@ export default defineComponent({
                         let tmp_data = tdata[elorder];
                         if (tdata.input_order == uniqueArray[index_order]) {
                           has_index_order = true;
-                          if (elorder == 'file') {
-                            let inster_data_num = file_row[index_order];
+                          
+                          if (tdata.hasOwnProperty('file_row') && tdata.file_row.hasOwnProperty(elorder)) {
+                            let inster_data_num_row = file_row[index_order];
+                            let inster_data_num = inster_data_num_row[elorder];
                             let resultStrList: string[] = splitStringIfExceedsLimit(tmp_data);
                             if (inster_data_num == 0) {
                               chang_column_Datas.push(resultStrList[inster_data_num])
@@ -635,8 +831,9 @@ export default defineComponent({
 
                     if (!has_index_order) {
                       key_v_Order.forEach((elorder: any) => {
-                        if (elorder == 'file') {
-                          let inster_data_num = file_row[index_order];
+                        if (file_row.length != 0 && file_row[index_order].hasOwnProperty(elorder)) {
+                          let inster_data_num_row = file_row[index_order];
+                          let inster_data_num = inster_data_num_row[elorder];
                           if (inster_data_num == 0) {
                             chang_column_Datas.push("")
                           } else {
@@ -668,7 +865,7 @@ export default defineComponent({
             }
             parameterSheetInfos[menu_name_rest] = { parametername: parametername, category: description_ja, groupnum: group_num, categorynum: category_num }
             // Excelを作成
-            await assembleData4Gp(columnHeaders, columnDatas, workbook, inputOrderInfos, parameterSheetInfos, file_rows, operationName.value, catalogue);
+            await assembleData4Gp(columnHeaders, columnDatas, workbook, inputOrderInfos, parameterSheetInfos, file_rows, operationName.value, catalogue,has_col);
             inputOrderInfos = [];
             columnHeaders = {};
             columnDatas = {};
@@ -677,6 +874,7 @@ export default defineComponent({
             progress.value++;
           }
         } catch (error: any) {
+          errorTableData.length = 0;
           disload();
           changeShow.value = false;
           emit("buttonDisabled", false);
@@ -694,14 +892,15 @@ export default defineComponent({
     };
 
     let matchingG = new RegExp("g");
-    const buildColumnHeaders = (data1: any, hasInputOrder: any, main_group_name_key: any, columns: any, tagObject: any, sub_gp_count: any,group_idx:any,tmp_gp_count: any,v_Order:any) => {
+    let matchingC = new RegExp("c");
+    const buildColumnHeaders = (data1: any, hasInputOrder: any, main_group_name_key: any, columns: any, tagObject: any, sub_gp_count: any,group_idx:any,tmp_gp_count: any,v_Order:any,has_col:boolean) => {
       columns.forEach((el: any) => {
         if (el.match(matchingG)) {
           let cols = data1[el].columns;
           let columns_view = data1[el].columns_view;
           let column_group_name = data1[el].column_group_name;
           if (main_group_name_key.includes(column_group_name)) {
-            if (hasInputOrder) {
+            if (hasInputOrder&& !has_col) {
               cols.splice(0, 0, 'c1');
               columns_view.splice(0, 0, 'c1');
             }
@@ -718,7 +917,7 @@ export default defineComponent({
           v_Order.push(...columns_view);
           tagObject[el] = {"column_group_name":column_group_name,"columns":cols};
           group_idx++;
-          buildColumnHeaders(data1,hasInputOrder,main_group_name_key,cols,tagObject,sub_gp_count,group_idx,tmp_gp_count,v_Order)
+          buildColumnHeaders(data1,hasInputOrder,main_group_name_key,cols,tagObject,sub_gp_count,group_idx,tmp_gp_count,v_Order,has_col)
         }
       })
       return sub_gp_count;
@@ -758,7 +957,7 @@ export default defineComponent({
           NORMAL: "0",
         },
         "Flag": {
-          LIST: [null]
+          LIST: ["0"]
         }
       };
       let defOperationIds: any[] = [];
@@ -868,8 +1067,12 @@ export default defineComponent({
       });
     }
 
-    const downloadJson = (fileName: string, json: any) => {
-      load();
+    const downloadJson = (fileName: string, json: any, isAll:boolean = false) => {
+      if (isAll) {
+        load(fileName);
+      } else {
+        load();
+      }
       const jsonStr = json instanceof Object ? JSON.stringify(json, null, 4) : json;
 
       const url = window.URL || window.webkitURL || window;
@@ -904,8 +1107,13 @@ export default defineComponent({
         );
       });
     }
-    function dataURLtoDownload(dataurl: any, name: string) {
-      load();
+
+    function dataURLtoDownload(dataurl: any, name: string, isAll: boolean = false) {
+      if (isAll) {
+        load(name);
+      } else {
+        load();
+      }
       var bstr = atob(dataurl),
         n = bstr.length,
         u8arr = new Uint8Array(n);
@@ -933,20 +1141,34 @@ export default defineComponent({
     const disload = () => {
       isDisabledRight.value = false;
     };
-    const load = () => {
+    const load = (pname: string = 'none') => {
       isDisabledRight.value = true;
-      ElMessage({
-        type: "info",
-        message: "ダウンロードを開始しました。",
-      });
+      if (pname == 'none') {
+        ElMessage({
+          type: "info",
+          message: "ダウンロードを開始しました。",
+        });
+      } else {
+        ElMessage({
+          type: "info",
+          message: pname + "をダウンロード。",
+        });
+      }
+      
     };
 
     bus.on("downloadSysFile", (isAll: boolean) => {
       downloadSysFile(isAll);
     })
 
+    bus.on("downloadSelectView", (isAll: boolean) => {
+      downloadSelectView(isAll);
+    })
+    
+
     onBeforeUnmount(() => {
       bus.off_all("downloadSysFile");
+      bus.off_all("downloadSelectView");
     });
 
     function splitStringIfExceedsLimit(input: string, limit: number = 32000): string[] {
@@ -971,11 +1193,139 @@ export default defineComponent({
       }
       return result;
     }
-    return { downloadITAJson, paramsValue, downloadITAExcel, change, paramsSheetValue, operationName, dialogVisibleSheet, operationselect, tableHeight, operation, isDisabled, loadingShow, parametersheet_columns, getRowKeys, referenceClick, downloadSysFile, isDisabledRight, downloadClick, changeShow, parametersheetTbData, sheetTable, optionsdata, selectedSheet, rowClass, selectionChange, rowClick, noClick, changeoperation, progress, total };
+
+    function isPlainTextFile(bstr:any) {
+      const sampleSize = Math.min(bstr.length, 4096);
+      let isTextFile = true;
+
+      for (let i = 0; i < sampleSize; i++) {
+        const charCode = bstr.charCodeAt(i);
+        if (charCode < 32 && charCode !== 10 && charCode !== 13 && charCode !== 9) {
+          isTextFile = false;
+          break;
+        }
+      }
+      return isTextFile;
+    }
+
+    function mergeWithMax<T extends Record<string, number>>(obj1: T, obj2: T): T {
+      const result = {} as T;
+      const allKeys = new Set([...Object.keys(obj1), ...Object.keys(obj2)]);
+      allKeys.forEach(key => {
+        result[key as keyof T] = Math.max(
+          obj1[key as keyof T] || 0,
+          obj2[key as keyof T] || 0
+        )  as T[keyof T];
+      });
+
+      return result;
+    }
+
+    const messagecancel = (() => {
+      errormsgshow.value = false;
+      errormsgTableshow.value = false;
+    });
+
+    const downloadSelectView = (isAll: boolean) => {
+      if (operationName.value == "") {
+        ElMessage({
+          type: "warning",
+          message: "オペレーションを選択してください。",
+        });
+        return;
+      }
+
+      if (selectedSheet.length == 0 && isAll) {
+        ElMessage({
+          type: "warning",
+          message: "パラメータシートを選択してください。",
+        });
+        return;
+      }
+      dlmsgshow.value = true;
+      
+    }
+    const dlmessagecancel = () => {
+      fmType.value = null;
+      dltypeList.value = null;
+      dlmsgshow.value = false;
+    }
+
+    const dlALL = () => {
+      dlmsgshow.value = false;
+    }
+
+    const changeFmType = (val: any) => {
+        fmType.value = val;
+    };
+
+    const dlRun = () => {
+      if (fmType.value == 1) {
+        dlmessagecancel();
+        downloadSysFile(true);
+      } else if (fmType.value == 2) {
+        dlmessagecancel();
+        downloadAllItaFile(true)
+      } else if (fmType.value == 3) {
+        dlmessagecancel();
+        downloadAllJsonFile();
+      } else {
+        fmType.value = null;
+        dltypeList.value = null;
+        ElMessage({
+          type: "warning",
+          message: "一括出力フォーマットを選択してください。",
+        });
+      }
+    }
+
+    return { downloadITAJson, paramsValue, downloadITAExcel, change, paramsSheetValue, operationName, dialogVisibleSheet, operationselect, tableHeight, operation, isDisabled, loadingShow, parametersheet_columns, getRowKeys, referenceClick, downloadSysFile, isDisabledRight, downloadClick, changeShow, parametersheetTbData, sheetTable, optionsdata, selectedSheet, rowClass, selectionChange, rowClick, noClick, changeoperation, progress, total, downloadAllItaFile, errormsgshow, errormsgTableshow, errorTableData, messagecancel,downloadSelectView,dlmsgshow,dlmessagecancel,dlALL,dltypeList, radios,changeFmType,dlRun};
   }
 });
 </script>
 <style scoped lang="less">
+.title_all{
+  margin-top: 0px;
+}
+.el-radio-group {
+  padding-bottom: 10px;
+  /deep/.el-radio.is-bordered.is-checked {
+    background-color: #0960bd;
+    color: #fff;
+  }
+
+  /deep/.el-radio__label {
+    // width: 148px;
+    text-align: left;
+    display: inline-block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /deep/.el-radio__input.is-checked + .el-radio__label {
+    color: #fff;
+  }
+
+  .el-radio {
+    font-size: 16px;
+    margin-bottom: 10px;
+    width: 180px;
+    height: 44.8px;
+    margin-right: 30px;
+  }
+
+  .el-radio:hover {
+    background-color: #f5f7fa;
+  }
+}
+.errorTable {
+  .el-table .cell {
+    height: auto !important;
+    line-height: 27px !important;
+  }
+}
+
+
 .steps-third {
   margin-top: 23px;
   border-top: 2px solid #e4e0e0;
@@ -1074,6 +1424,39 @@ export default defineComponent({
   /deep/.el-dialog {
     --el-dialog-width: 80% !important;
     --el-dialog-margin-top: 8vh !important;
+  }
+}
+.nextBtn_dl {
+    margin-right: 10px;
+    padding: 0 20px;
+    border-radius: 8px;
+    color: #fff;
+    background-color: #da6a38;
+
+    &:hover {
+      opacity: 0.8;
+    }
+  }
+</style>
+<style>
+.errorBox1 {
+  .el-dialog__body {
+    overflow-x: hidden !important;
+    padding-top: 8px;
+    padding-bottom: 0px;
+  }
+
+  .el-dialog__header {
+    padding-bottom: 0px !important;
+    padding-top: 0px !important;
+    padding-right: 0px !important;
+    padding: 8px 20px !important;
+    
+  }
+
+  .el-dialog__footer {
+    padding-top: 20px !important;
+    box-sizing: border-box;
   }
 }
 </style>

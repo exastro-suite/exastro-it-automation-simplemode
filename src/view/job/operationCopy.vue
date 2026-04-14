@@ -25,7 +25,7 @@
               @change="checkBoxChange" />
           </p>
           <el-select v-model="operation" filterable class="m-2" placeholder="コピー元オペレーション名" @change="changeoperation"
-            :disabled="isDisabled || loadingShow" >
+            :disabled="isDisabled || loadingShow" style="width: 322px;">
             <el-option v-for="item in operationOptions" :key="item.value" :label="item.label" :value="item.label" :style="{ display: isGather? (isCheckBoxShow && checked1? (item.isFlagOne ? 'list-item':'none'):'list-item') : !item.isFlagOne ? 'list-item':'none'}"/>
           </el-select>
         </div>
@@ -127,7 +127,8 @@ import {
   optionAllRegister,
   getOperationCount,
   relationships,
-  getOperationDataSetInfosByFlag
+  getOperationDataSetInfosByFlag,
+  getMenuDefinition
 } from "../../api/jobApi";
 import { operationList } from "../../api/jobList";
 import { Edit, DocumentCopy, Warning, Delete } from "@element-plus/icons-vue";
@@ -587,13 +588,26 @@ export default defineComponent({
               let res1 = await optionName(params1, realRestName);
               copyBaseData.value = res1.data.data;
 
+              // Sourceパラメータシート定義一覧取得
+              let res_B:any = await getMenuDefinition(elp.value)
+              let res_GR:any = await getMenuDefinition(realRestName)
+              let col_info_B = res_B.data.data.menu_info.column
+              let col_info_GR = res_GR.data.data.menu_info.column
+              let diffItems = findDifferentItemNames(col_info_GR,col_info_B)
+
               copyBaseData.value.forEach((baseObj: unknown) => {
                 host.forEach(async (itemHost: any) => {
-                  let obj1 = JSON.parse(JSON.stringify(baseObj));
+                  let obj1: any = null
+                  if (diffItems.length != 0) {
+                    let obj1_tmp = JSON.parse(JSON.stringify(baseObj));
+                    obj1 = deepDeleteKeys(obj1_tmp, diffItems);
+                  } else {
+                    obj1 = JSON.parse(JSON.stringify(baseObj));
+                  }
                   if (itemHost.host_name == obj1.parameter.host_name) {
                     obj1.parameter.uuid = "";
                     obj1.parameter.operation_name_select = selectName;
-
+                    
                     if (obj1.parameter.file) {
                     } else {
                       obj1.file = null;
@@ -1061,6 +1075,40 @@ export default defineComponent({
       }
       return -1;
     };
+    function findDifferentItemNames(obj1: any, obj2: any) {
+      const names1 = new Set();
+      const names2 = new Set();
+
+      for (const key in obj1) {
+        if (obj1[key].item_name) {
+          names1.add(obj1[key].item_name);
+        }
+      }
+      for (const key in obj2) {
+        if (obj2[key].item_name) {
+          names2.add(obj2[key].item_name);
+        }
+      }
+      const diff = new Set([...names1].filter(x => !names2.has(x)));
+      return Array.from(diff)  as string[];
+    }
+
+    function deepDeleteKeys<T>(obj: T, keysToDelete: string[]): T {
+      if (typeof obj !== 'object' || obj === null) return obj;
+
+      if (Array.isArray(obj)) {
+        return obj.map(item => deepDeleteKeys(item, keysToDelete)) as unknown as T;
+      }
+
+      const newObj = {} as T;
+      Object.keys(obj).forEach(key => {
+        if (!keysToDelete.includes(key)) {
+          newObj[key as keyof T] = deepDeleteKeys(obj[key as keyof T], keysToDelete);
+        }
+      });
+      return newObj;
+    }
+
     return {
       tableHeight,
       changestatus,

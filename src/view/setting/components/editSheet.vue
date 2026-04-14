@@ -1,8 +1,8 @@
 <template>
-  <div v-if="visible" class="editBoxSheet" v-loading="loadingDialog">
-    <div  ref="spreadsheetEdit" style="min-height: 535px; min-width: 100%;"></div>
+  <div v-if="visible" class="editBoxSheet_p" v-loading="loadingDialog">
+    <div  ref="spreadsheetEdit" style="min-height: 443px; min-width: 100%;"></div>
   </div>
-  <div v-else v-loading="true" style="height: 535px"></div>
+  <div v-else v-loading="true" style="height: 443px"></div>
   <el-upload ref="uploadRef" class="upload-demo" action="#" :auto-upload="false" :on-change="convertFileToBase64"
     v-show="false">
     <template #trigger>
@@ -87,6 +87,9 @@ export default defineComponent({
 
     let deviceListData: Array<DataType> = reactive([]);
 
+    let crr_pagination_var: any = 25;
+    let old_optionsArr: any = [];
+
     onMounted(() => {
       sheetWidth.value = window.innerWidth * 0.868 + "px";
 
@@ -109,6 +112,7 @@ export default defineComponent({
         errorFlag.value = false;
       })
       bus.on("cancelEditSheetSetting", () => {
+        crr_pagination_var = 25;
         cancel()
       })
       bus.on("registerSetting", () => {
@@ -265,7 +269,7 @@ export default defineComponent({
 
       if (container[0]) {
         container[0].style.width = sheetWidth.value;
-        container[0].style.maxHeight = "535px";
+        container[0].style.maxHeight = "443px";
       }
 
       if (cell.classList.contains("readonly")) {
@@ -569,12 +573,20 @@ export default defineComponent({
       updateTable: updateTable,
       ondeleterow: onDeleteRow,
       onbeforedeleterow: onBeforeDeleteRow,
-      lazyLoading: true,
+      // lazyLoading: true,
+      pagination: crr_pagination_var,
+      search:true,
+      paginationOptions:[15,25,50,100],
       oninsertrow: function (el: any, rowNumber: any, numOfRows: any) {
         if (deviceListData!= null && deviceListData.length > 0) {
           this.setValueFromCoords(1, rowNumber + insertBeforeRow, deviceListData[0].host_name);
         }
+      },
+      onchangepage: function (instance: any, newPageNumber: number, oldPageNumber: number, rowsPerPage: number) {
+        const paginationDropdown_p: any = document.querySelector('.jexcel_pagination_dropdown');
+        crr_pagination_var = paginationDropdown_p?.value;
       }
+
     };
 
     // ダウンロードファイル
@@ -665,8 +677,10 @@ export default defineComponent({
         });
         await optionName(params1, parameter).then(async(res: any) => {
           let dataJson = res.data.data;
+          old_optionsArr = dataJson;
           dataObj.length = 0;
           if (dataJson.length) {
+            old_optionsArr = dataJson;
             dataJson.forEach((element: any) => {
               let obj: any = {};
               element.parameter["actionType"] = "既存";
@@ -699,6 +713,7 @@ export default defineComponent({
               dataObj.push(obj);
             });
           } else {
+            old_optionsArr.value = [];
             dataObj.push([]);
           }
 
@@ -1058,6 +1073,7 @@ export default defineComponent({
           }
           loadingFlag.value = false;
           try {
+            jSpreadSheetOptions.pagination = crr_pagination_var;
             jspreadsheetObj = jSpreadSheet(
               //DOM参照
               spreadsheetEdit.value,
@@ -1243,6 +1259,46 @@ export default defineComponent({
           }
         }
         let hostSet: any = [];
+        for (let index = 0; index < old_optionsArr.length; index++) {
+          const o = old_optionsArr[index];
+          let parameter = o.parameter;
+          o.parameter.operation_name_select = operationList[0];
+          
+          for (let key in parameter) {
+            if (key == "actionType") {
+              delete parameter["actionType"];
+            } else {
+              let ele: any = parameter[key];
+              let re = /\u0000/g;
+              let tmp = ele
+              try {
+                tmp = ele.toString().replace(re, '');
+              } catch (e: any) {
+                tmp = ele
+              }
+              if (tmp != ele) {
+                if (tmp === "") {
+                  // ファイルなしの場合、ファイル送付しない
+                  if (key == "file" && o.type == 'Update') {
+                    delete parameter["file"];
+                  } else {
+                    parameter[key] = null;
+                  }
+                } else {
+                  parameter[key] = tmp;
+                }
+              }
+              if (ele === "") {
+                // ファイルなしの場合、ファイル送付しない
+                if (key == "file" && o.type == 'Update') {
+                  delete parameter["file"];
+                } else {
+                  parameter[key] = null;
+                }
+              }
+            }
+          }
+        }
         for (let index = 0; index < optionsArr.length; index++) {
           const o = optionsArr[index];
           let parameter = o.parameter;
@@ -1283,8 +1339,49 @@ export default defineComponent({
             }
           }
         }
+        let indexes: any = [];
+        for (let index = 0; index < optionsArr.length; index++) {
+          const element = optionsArr[index];
+          if (element.type != "Register" && element.parameter.discard != "1") {
+            for (let index_old = 0; index_old < old_optionsArr.length; index_old++) {
+              if (element.parameter.uuid == old_optionsArr[index_old].parameter.uuid) {
+                if (old_optionsArr[index_old].file.file == null) {
+                  old_optionsArr[index_old].file.file == 'undefined'
+                }
+                if (element.file.file != old_optionsArr[index_old].file.file) {
+                  indexes.push(index)
+                  continue;
+                }
+                for (let key in element.parameter) {
+                  if (element.parameter[key] != old_optionsArr[index_old].parameter[key]) {
+                    indexes.push(index)
+                    continue;
+                  }
+                }
+              }
+            }
+          } else {
+            indexes.push(index)
+          }
+        }
+        indexes.sort((a: any, b: any) => b - a);
+        const filteredArray = optionsArr.filter((e: any, index: any) => indexes.includes(index));
         loadingDialog.value = true
-        await optionAllRegister(optionsArr, parameter.value)
+        if (filteredArray.length == 0) {
+          ceEdit("true");
+          ElMessage({
+              type: "success",
+              message: "パラメータの保存が成功しました。",
+          });
+          errorFlag.value = false;
+          jspreadsheetObj.page(0);
+          emit("setButtonStatus", false);
+          isDisabled.value = false;
+          loadingDialog.value = false;
+          deleteRowsArray.length = 0;
+          return;
+        }
+        await optionAllRegister(filteredArray, parameter.value)
           .then((res: any) => {
             ceEdit("true");
             // update operation
@@ -1302,6 +1399,8 @@ export default defineComponent({
             }
             emit("editSheetchangestatus", copystatus);
             getJsonData(parameter.value, operation.value);
+
+            jspreadsheetObj.page(0);
             isDisabled.value = false;
           })
           .catch((err: any) => {
@@ -1370,7 +1469,9 @@ export default defineComponent({
           let arr1 = res.data.data;
           if (arr1.length) {
             arr1.forEach((element: any) => {
-              deviceListData.push(element.parameter);
+              if (element.parameter.managed_system_item_number == "1") {
+                deviceListData.push(element.parameter);
+              }
             });
             deviceListData.sort((a: any, b: any) => {
               return Date.parse(a["last_update_date_time"]) - Date.parse(b["last_update_date_time"]);
@@ -1418,7 +1519,15 @@ export default defineComponent({
 }
 </style>
 <style lang="less">
-.editBoxSheet {
+.editBoxSheet_p {
+  .jexcel_content {
+    box-shadow: none !important;
+    border: 1px solid #dcdfe6;
+    width: auto !important;
+  }
+  .jexcel_filter > div:nth-child(2) {
+    display: none;
+  }
   .jexcel > thead > tr > td {
     text-align: left;
   }
@@ -1433,12 +1542,18 @@ export default defineComponent({
   }
   .jexcel_container {
     display:flex;
-    width: 100% !important;
+    // width: 100% !important;
+    width: auto !important;
   }
   .jexcel_content {
-    height: 530px;
+    height: 422px;
     box-shadow: none !important;
     max-width: 100%;
+    max-height: 422px;
+  }
+  .jexcel_container {
+    display:flex;
+    flex-direction: column;
   }
 }
 </style>

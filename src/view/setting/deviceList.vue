@@ -305,7 +305,7 @@ export default defineComponent({
         importApi(restName.value, base64Code)
           .then(() => {
             handleRefresh();
-            upload.value!.clearFiles();
+            upload.value?.clearFiles();
           })
           .catch((error: any) => {
             try {
@@ -320,7 +320,7 @@ export default defineComponent({
                 message: error,
               });
             }
-            upload.value!.clearFiles();
+            upload.value?.clearFiles();
           });
       });
     };

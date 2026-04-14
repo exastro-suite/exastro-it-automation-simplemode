@@ -1,6 +1,6 @@
 <template>
   <el-dialog :close-on-click-modal="false" :close-on-press-escape="false" v-model="visible" @close="cancel"
-    class="readOnlyBoxSheet" @open="opened" :show-close="false">
+    class="readOnlyBoxSheet_p" @open="opened" :show-close="false">
     <el-popconfirm width="300px" confirm-button-text="Json" cancel-button-text="Excel" icon-color="#626AEF"
       hide-after="0" title="ファイルタイプを選択してください。" @cancel="exportRight" @confirm="exportRightJson">
       <template #reference>
@@ -343,7 +343,10 @@ export default defineComponent({
       nestedHeaders: nestedHeaders,
       updateTable: updateTable,
       contextMenu: handlerContextMenu,
-      lazyLoading: true,
+      // lazyLoading: true,
+      pagination: 25,
+      search:true,
+      paginationOptions:[15,25,50,100]
     };
     const cancel = () => {
       filePosition.value = null;
@@ -708,11 +711,19 @@ export default defineComponent({
 }
 </style>
 <style lang="less">
-.readOnlyBoxSheet {
+.readOnlyBoxSheet_p {
   --el-dialog-width: 88% !important;
   --el-dialog-margin-top: 6vh !important;
   .jexcel_container {
     display:flex;
+  }
+  .jexcel_content {
+    box-shadow: none !important;
+    border: 1px solid #dcdfe6;
+    width: auto !important;
+  }
+  .jexcel_filter > div:nth-child(2) {
+    display: none;
   }
   .jexcel > thead > tr > td {
     text-align: left;
@@ -727,10 +738,16 @@ export default defineComponent({
     width: max-content;
   }
   .jexcel_content {
-    height: 600px;
+    height: 423px;
     box-shadow: none !important;
     border: 1px solid #dcdfe6;
-    max-width: 100%
+    max-width: 100%;
+    max-height: 423px;
+  }
+
+  .jexcel_container {
+    display:flex;
+    flex-direction: column;
   }
 
   .el-dialog__body {
@@ -738,7 +755,7 @@ export default defineComponent({
   }
 }
 
-.readOnlyBoxSheet:deep(.el-dialog__body) {
+.readOnlyBoxSheet_p:deep(.el-dialog__body) {
   margin: 0 auto;
 }
 

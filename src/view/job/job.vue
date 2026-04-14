@@ -153,8 +153,8 @@ import SelectHost from "./selectHost.vue";
 import OperationLogin from "./operationLogin.vue";
 import OperationCopy from "./operationCopy.vue";
 import Execute from "./execute.vue";
-import { QuestionFilled } from "@element-plus/icons-vue";
-import { defineComponent, reactive, ref, watch } from "vue";
+import { QuestionFilled,Loading } from "@element-plus/icons-vue";
+import { defineComponent, reactive, ref, watch, h } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { pulldownApi } from "../../api/index";
 import { designateOperation } from "../../api/jobList";
@@ -169,6 +169,7 @@ import {
   ElMessageBox,
   ElCollapse,
   ElCarouselItem,
+  ElIcon
 } from "element-plus";
 import { useStore } from "../../store/index";
 import {
@@ -594,6 +595,24 @@ export default defineComponent({
           },
           type: updateType
         }];
+        if (updateType == 'Register') {
+          let data_Register = [{
+            parameter: {
+              discard: "0",
+              Flag: "0",
+              uuid: uptateuuid,
+              Operation: loginOperationId,
+              Conductor: conductorId,
+              Movement: "",
+              Host: loggedOperationDataSetInfos.length == 0 ? "" : loggedOperationDataSetInfos.Host,
+              remarks: loggedOperationDataSetInfos.length == 0 ? "" : loggedOperationDataSetInfos.remarks,
+              last_update_date_time: null,
+              last_updated_user: null
+            },
+            type: updateType
+          }];
+          return data_Register
+        } 
         return data;
       }
       return null;
@@ -1404,8 +1423,27 @@ export default defineComponent({
         cancelButtonText: "Cancel",
         type: "warning",
         customClass: "persdsd",
-      })
+        closeOnClickModal: false,
+        closeOnPressEscape:false,
+        })
         .then(async () => {
+          const box = ElMessageBox({
+            title: '',
+            showClose: false,
+            showConfirmButton: false,
+            showCancelButton: false, 
+            closeOnClickModal: false, 
+            closeOnPressEscape: false, 
+            message: h(
+              'div',
+              { style: 'display:flex;align-items:center;gap:10px;' },
+              [
+                h(ElIcon, { class: 'is-loading' ,color: '#409EFF', size: 22 }, () => h(Loading)),
+                h('span', '実行状況確認ページに遷移中...'),
+              ]
+            ),
+          })
+
           // Delete the relationship between the conductor and the operation
           let operationSelected = store.getLoginOperation;
           let conductorId = store.getConductorId;
@@ -1437,6 +1475,7 @@ export default defineComponent({
           };
           execute(obj)
             .then((res: any) => {
+              ElMessageBox.close();
               next();
               // go to confirm
               router.push({
@@ -1444,13 +1483,16 @@ export default defineComponent({
               });
             })
             .catch((err: any) => {
+              ElMessageBox.close();
               ElMessage({
                 type: "error",
                 message: err,
               });
             });
         })
-        .catch(() => {});
+        .catch(() => {
+          ElMessageBox.close();
+        });
     }
 
     // Import enent
@@ -1474,7 +1516,6 @@ export default defineComponent({
     const changeHostLoading = (val: any) => {
       hostNextDisabled.value = val;
     };
-
     return {
       changeMovement,
       changeSecond,

@@ -345,6 +345,10 @@ export default defineComponent({
 <style lang="less">
 .movementDialog {
   --el-dialog-width: 78% !important;
+  .el-dialog__header {
+  padding: 20px 20px !important;
+  padding-bottom: 0px !important;
+}
 }
 .el-table tbody tr .el-table__cell {
   padding: 0px 0 !important;

@@ -29,6 +29,7 @@
         :prop="item.dataIndex"
         :label="item.title"
         :key="index"
+        sortable
       />
     </el-table>
   </div>

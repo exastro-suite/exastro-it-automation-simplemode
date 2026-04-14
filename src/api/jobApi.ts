@@ -390,3 +390,17 @@ export function getMenuGroupList(data:any) {
     data,
   });
 }
+
+export function getMenuDefinition(restName:string) {
+  const orgId = localStorage.getItem("organization");
+  const workspaceId = localStorage.getItem("workspace");
+  return service({
+    url:
+      Api.Api +
+      orgId +
+      "/workspaces/" +
+      workspaceId +
+      "/ita/create/define/" +restName,
+    method: "GET",    
+  });
+}

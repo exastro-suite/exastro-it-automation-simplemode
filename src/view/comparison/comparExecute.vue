@@ -239,7 +239,7 @@ export default defineComponent({
           NORMAL: "0",
         },
         "Flag": {
-          LIST: [null]
+          LIST: ["0"]
         }
       };
       let defOperationIds: any[] = [];
@@ -256,7 +256,8 @@ export default defineComponent({
           message: err,
         });
       });
-      await operationListForFlag(defOperationIds)
+      if (defOperationIds.length != 0) {
+        await operationListForFlag(defOperationIds)
         .then((res: any) => {
           let tmpoptions: any = [];
           let arr1 = res.data.data;
@@ -286,7 +287,9 @@ export default defineComponent({
             message: error,
           });
         });
-
+      } else {
+        loadingShow.value = false
+      }
     }
     getOperationList()
     const headerStyle = ({ row, rowIndex, columnIndex, column }: any) => {
@@ -460,7 +463,7 @@ export default defineComponent({
           } else {
             let obj: any = {};
             obj.title = '-';
-            obj.content = err;
+            obj.content = '比較結果ファイルの生成に失敗しました。' + err;
             arr.push(obj);
           }
           tableData.forEach((item: any) => {
